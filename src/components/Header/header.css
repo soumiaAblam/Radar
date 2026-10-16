@@ -1,7 +1,12 @@
-.app-header {
+.appHeader {
   padding: 1.5rem 2rem;
   background-color: aquamarine;
   min-width: none;
-  min-height: 100vh;
-  
+  min-height: 72px;
+}
+
+.chooseAccount {
+  padding: 1rem 2rem;
+  background-color: lightgray;
+  border-bottom: 1px solid #ccc;
 }

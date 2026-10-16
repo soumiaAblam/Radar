@@ -1,11 +1,21 @@
 import './header.css'
 
-interface HeaderProps {
+type HeaderProps = {
   title: string
 }
 
 function Header({ title }: HeaderProps) {
-  return <header className="app-header"><h1>{title}</h1></header>
-}
+  return (
+    <header>
+  <section className="appHeader">
+    <h1> {title} </h1>
+  </section>
+
+  <section className="chooseAccount">
+    <p>Seleccionar cuenta</p>
+  </section>
+  </header>
+
+)}
 
 export default Header

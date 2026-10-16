@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom'
 import DashboardPage from './pages/Dashboard/Dashboard'
 
 /* funcion LoginPage en Login.tsx */
+/*type PageName = 'login' | 'dashboard' | 'audience'*/
+/*type Status = 'loading' | 'success' | 'error'*/
 
 function App() {
   return (
