@@ -1,9 +1,72 @@
-.dashboardLayout {
-  display: flex;
-  min-height: 100vh;
-}
-.dashboardMain {
-  flex: 1;
-  min-width: 0;
-  }
+.dashboard-layout { display: flex; min-height: 100vh; background: #f4f8ff; }
+.dashboard-shell { min-width: 0; flex: 1; }
+.dashboard-content { max-width: 1680px; margin: 0 auto; padding: 1.6rem 1.75rem 3rem; }
+.dashboard-intro { position: relative; margin-bottom: 1.15rem; padding: .4rem .25rem; overflow: hidden; }
+.dashboard-intro::after { position: absolute; top: .1rem; right: 4%; width: 16rem; height: 5rem; content: ''; opacity: .48; background: repeating-radial-gradient(ellipse at center, transparent 0 7px, #b9d5ff 8px 9px, transparent 10px 15px); transform: rotate(-8deg); }
+.section-kicker { margin: 0 0 .25rem; color: #156fe7; font-size: .71rem; font-weight: 800; letter-spacing: .15em; }
+.dashboard-intro h1 { position: relative; z-index: 1; max-width: 800px; margin: 0; color: #101c44; font-size: clamp(1.9rem, 3vw, 3rem); letter-spacing: -.055em; }
+.dashboard-intro > p:last-child { position: relative; z-index: 1; max-width: 760px; margin: .45rem 0 0; color: #68779b; line-height: 1.5; }
+.dashboard-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; margin-top: 1rem; align-items: start; }
+.dashboard-primary { display: grid; gap: 1rem; min-width: 0; }
 
+@media (max-width: 1180px) { .dashboard-columns { grid-template-columns: 1fr; }.dashboard-content { padding-inline: 1.25rem; } }
+@media (max-width: 780px) { .dashboard-layout { display: block; }.dashboard-content { padding: 1.1rem 1rem 2.5rem; }.dashboard-intro::after { right: -5rem; }.dashboard-intro h1 { font-size: 2rem; } }
+
+/* Espacios vacíos: conservan la composición de las tarjetas hasta cargar datos reales. */
+.empty-card-copy { display: grid; flex: 1; gap: .38rem; min-width: 0; }
+.empty-line { display: block; min-height: .68rem; }
+.empty-line--label { width: 72%; }
+.empty-line--value { min-height: 1.25rem; width: 52%; }
+.empty-line--detail { min-height: .58rem; width: 68%; }
+.empty-line--panel-title { min-height: 1.15rem; width: 13rem; }
+.empty-line--panel-detail { min-height: .7rem; width: 20rem; max-width: 100%; }
+.empty-line--card-title { min-height: .76rem; width: 58%; margin-bottom: .6rem; }
+.empty-line--row { min-height: .72rem; width: 78%; }
+
+.empty-location-row, .empty-schedule-row { display: flex; justify-content: space-between; gap: .5rem; min-height: 1.72rem; border-bottom: 1px solid #edf2fa; }
+.empty-location-row:last-child, .empty-schedule-row:last-child { border-bottom: 0; }
+.empty-location-row span, .empty-schedule-row span { display: block; width: 58%; }
+.empty-location-row strong, .empty-schedule-row strong { display: block; width: 18%; }
+.empty-schedule-row { align-items: center; min-height: 1.95rem; }
+
+.chart-filter button { min-width: 4rem; min-height: 1.75rem; }
+.chart-labels span { width: 2.25rem; min-height: .6rem; }
+.chart-summary .empty-card-copy { gap: .2rem; }
+.chart-summary .empty-line--value { min-height: .92rem; }
+.insight-item .empty-card-copy { gap: .35rem; }
+.account-row .empty-card-copy { gap: .25rem; }
+.account-row button { min-width: 3.9rem; min-height: 1.9rem; }
+
+/* Navegación y cabecera con una escala de lectura más cómoda. */
+.sidebar-link, .sidebar-settings { min-height: 48px; font-size: .95rem; }
+.sidebar-link span { width: 1.15rem; font-size: 1.12rem; }
+.sidebar-link:hover { color: #e91e63; border-color: #ffc3d7; background: #fff0f6; box-shadow: 0 5px 12px rgba(233, 30, 99, .12); }
+.sidebar-settings:hover { color: #e91e63; border-color: #ffc3d7; background: #fff0f6; }
+
+.app-header { min-height: 68px; }
+.account-selector, .period-button { min-height: 42px; padding-inline: .9rem; font-size: .92rem; }
+.account-selector span:first-child { font-size: 1.15rem; }
+.icon-button { width: 42px; height: 42px; font-size: 1.1rem; }
+.profile-avatar { width: 36px; height: 36px; font-size: .92rem; }
+
+@media (max-width: 780px) { .sidebar-link { min-height: 42px; font-size: .88rem; } }
+@media (max-width: 620px) { .app-header { min-height: 58px; }.period-button { width: 42px; }.account-selector { min-height: 40px; font-size: .82rem; }.icon-button { width: 38px; height: 38px; }.profile-avatar { width: 34px; height: 34px; } }
+
+/* Cuerpo temporal: solo divisiones vacías, sin gráficos ni elementos decorativos. */
+.dashboard-intro::after { display: none; }
+.dashboard-empty-card { box-sizing: border-box; width: 100%; min-height: 96px; }
+.dashboard-empty-card--profile { min-height: 360px; }
+.dashboard-empty-card--chart { min-height: 295px; }
+.dashboard-empty-card--insight { min-height: 210px; }
+.dashboard-empty-card--recommendation { min-height: 300px; }
+.metric-card.dashboard-empty-card { min-height: 96px; }
+
+.sidebar-link, .sidebar-settings { min-height: 52px; font-size: 1.05rem; }
+.sidebar-link span { width: 1.25rem; font-size: 1.25rem; }
+.account-selector span:first-child { font-size: 1.35rem; }
+.period-button span { font-size: 1.15rem; }
+.icon-button { width: 48px; height: 48px; font-size: 1.35rem; }
+.profile-avatar { width: 42px; height: 42px; font-size: 1.05rem; }
+
+@media (max-width: 780px) { .sidebar-link { min-height: 46px; font-size: .95rem; } }
+@media (max-width: 620px) { .icon-button { width: 42px; height: 42px; font-size: 1.18rem; }.profile-avatar { width: 38px; height: 38px; }.dashboard-empty-card--profile { min-height: 270px; }.dashboard-empty-card--chart { min-height: 230px; } }

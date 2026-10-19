@@ -1,12 +1,2 @@
-.appHeader {
-  padding: 1.5rem 2rem;
-  background-color: aquamarine;
-  min-width: none;
-  min-height: 72px;
-}
-
-.chooseAccount {
-  padding: 1rem 2rem;
-  background-color: lightgray;
-  border-bottom: 1px solid #ccc;
-}
+.app-header { display: flex; min-height: 58px; align-items: center; gap: .75rem; padding: .7rem 1.75rem; background: rgba(255,255,255,.88); border-bottom: 1px solid #e3ebf7; backdrop-filter: blur(10px); }.app-header__context { display: none; }.account-selector, .period-button { display: inline-flex; align-items: center; gap: .45rem; min-height: 34px; padding: 0 .7rem; color: #17274c; border: 1px solid #dce7f5; border-radius: .5rem; background: #fff; font-size: .76rem; font-weight: 700; }.account-selector span:first-child { color: #ff3a72; font-size: 1rem; }.app-header__actions { display: flex; align-items: center; gap: .55rem; margin-left: auto; }.period-button { cursor: pointer; }.icon-button { display: grid; width: 34px; height: 34px; place-items: center; color: #18325f; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }.icon-button:hover { background: #eaf3ff; }.profile-avatar { display: grid; width: 30px; height: 30px; place-items: center; color: #fff; border-radius: 50%; background: #156fe7; font-size: .78rem; font-weight: 800; }
+@media (max-width: 620px) { .app-header { padding: .65rem 1rem; }.period-button { width: 34px; padding: 0; justify-content: center; font-size: 0; }.period-button span { font-size: .8rem; }.account-selector { max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } }

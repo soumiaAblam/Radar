@@ -1,21 +1,37 @@
+import AudienceProfile from '../../components/AudienceProfile/AudienceProfile'
+import FollowersChart from '../../components/FollowersChart/FollowersChart'
 import Header from '../../components/Header/Header'
+import InsightsPanel from '../../components/InsightsPanel/InsightsPanel'
+import MetricGrid from '../../components/MetricGrid/MetricGrid'
 import Sidebar from '../../components/Sidebar/Sidebar'
 import './dashboard.css'
 
-
 function DashboardPage() {
   return (
-    <div className="dashboardLayout">
-    <Sidebar/>
+    <div className="dashboard-layout">
+      <Sidebar />
 
-     <div className="dashboardMain">
-      <Header title="Dashboard" />
+      <div className="dashboard-shell">
+        <Header title="Audiencia" />
 
-      <main className="dashboardMain">
-        <h1>Dashboard</h1>
-        <p>Bienvenido al panel de control.</p>
-      </main>
-    </div>
+        <main className="dashboard-content">
+          <section className="dashboard-intro" aria-labelledby="dashboard-title">
+            <p className="section-kicker">AUDIENCIA</p>
+            <h1 id="dashboard-title">Conoce y haz crecer tu comunidad.</h1>
+            <p>Analiza quién te sigue, cómo evoluciona tu audiencia y detecta oportunidades reales de crecimiento.</p>
+          </section>
+
+          <MetricGrid />
+
+          <div className="dashboard-columns">
+            <div className="dashboard-primary">
+              <AudienceProfile />
+              <FollowersChart />
+            </div>
+            <InsightsPanel />
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

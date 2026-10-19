@@ -1,42 +1,4 @@
-.sidebar {
-  padding: 1.5rem;
-  background-color: #3288de;
-  width: 250px;
-  min-height: 100vh;
-}
-
-.sidebarMenu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.5rem;
-  list-style-type: none;
-}
-.sidebarMenu a {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 44px;
-  padding: 0.75rem 1rem;
-  color: #d9eaff;
-  border: 1px solid transparent;
-  border-radius: 0.75rem;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-.sidebarMenu a:hover {
-  color: #ffffff;
-  background-color: rgba(3, 210, 110, 0.2);
-  border-color: #03d26e;
-  transform: translateX(4px);
-}
-.sidebarMenu a.active {
-  color: #ffffff;
-  background-color: #ff3a72;
-  box-shadow: 0 8px 18px rgba(255, 58, 114, 0.28);
-}
-.sidebarMenu a:focus-visible {
-  outline: 3px solid #03d26e;
-  outline-offset: 3px;
-}
+.sidebar { position: sticky; top: 0; display: flex; width: 172px; min-height: 100vh; flex: 0 0 172px; flex-direction: column; padding: 1.35rem .55rem; background: #fff; border-right: 1px solid #e3ebf7; }
+.sidebar-brand { display: grid; gap: .04rem; padding: .2rem .75rem 1.55rem; color: #156fe7; font-size: .91rem; font-weight: 900; letter-spacing: .08em; text-decoration: none; }.sidebar-brand span { font-size: .58rem; font-weight: 800; letter-spacing: .16em; }
+.sidebar-menu { display: grid; gap: .32rem; margin: 0; padding: 0; list-style: none; }.sidebar-link, .sidebar-settings { display: flex; align-items: center; gap: .62rem; min-height: 42px; padding: .65rem .72rem; color: #304264; border: 1px solid transparent; border-radius: .65rem; font-size: .8rem; font-weight: 650; text-decoration: none; transition: .2s ease; }.sidebar-link span { width: 1rem; color: #1d3b70; font-size: 1rem; text-align: center; }.sidebar-link:hover { color: #0a9d56; background: #e9fff4; border-color: #b5f4d2; transform: translateX(2px); }.sidebar-link--active { color: #156fe7; background: #eaf3ff; border-color: #d5e8ff; }.sidebar-link--active span { color: #156fe7; }.sidebar-settings { margin-top: auto; }.sidebar-settings:hover { color: #ff3a72; background: #fff0f4; }
+@media (max-width: 780px) { .sidebar { position: static; width: 100%; min-height: auto; padding: .7rem 1rem; border-right: 0; border-bottom: 1px solid #e3ebf7; }.sidebar-brand { display: none; }.sidebar-menu { display: flex; gap: .35rem; overflow-x: auto; }.sidebar-menu li { flex: 0 0 auto; }.sidebar-link { min-height: 38px; padding: .5rem .7rem; }.sidebar-settings { display: none; } }
