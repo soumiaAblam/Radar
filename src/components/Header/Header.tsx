@@ -3,11 +3,16 @@ import './header.css'
 
 interface HeaderProps { title: string }
 
-type OpenPanel = 'accounts' | 'add-account' | 'notifications' | 'profile' | null
+type OpenPanel = 'accounts' | 'add-account' | 'notifications' | 'profile' | 'edit-profile' | null
 
 type LinkedAccount = {
   id: string
   handle: string
+}
+
+type ProfileDetails = {
+  name: string
+  email: string
 }
 
 const initialAccounts: LinkedAccount[] = [
@@ -22,6 +27,10 @@ function Header({ title }: HeaderProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(initialAccounts[0].id)
   const [instagramHandle, setInstagramHandle] = useState('')
   const [connectionMessage, setConnectionMessage] = useState('')
+  const [profile, setProfile] = useState<ProfileDetails>({ name: 'Usuario demo', email: 'demo@demo.com' })
+  const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
+  const [newPassword, setNewPassword] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
 
   const selectedAccount = linkedAccounts.find((account) => account.id === selectedAccountId) ?? linkedAccounts[0]
 
@@ -30,6 +39,23 @@ function Header({ title }: HeaderProps) {
   }
 
   const closePanel = () => setOpenPanel(null)
+
+  const openProfileEditor = () => {
+    setProfileDraft(profile)
+    setNewPassword('')
+    setProfileMessage('')
+    setOpenPanel('edit-profile')
+  }
+
+  const saveProfile = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setProfile({
+      name: profileDraft.name.trim() || profile.name,
+      email: profileDraft.email.trim() || profile.email,
+    })
+    setNewPassword('')
+    setProfileMessage('Perfil actualizado en esta sesión de demostración.')
+  }
 
   const requestAccountLink = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -55,6 +81,7 @@ function Header({ title }: HeaderProps) {
   }
 
   return (
+    <>
     <header className="app-header">
       <p className="app-header__context">{title}</p>
 
@@ -123,10 +150,10 @@ function Header({ title }: HeaderProps) {
             <section className="header-panel profile-panel" aria-label="Perfil de usuario">
               <button type="button" className="header-panel__close" aria-label="Cerrar perfil" onClick={closePanel}>×</button>
               <div className="profile-panel__photo" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20c.85-3.25 3.05-5 6.5-5s5.65 1.75 6.5 5" /></svg></div>
-              <strong>Usuario demo</strong>
-              <span>demo@demo.com</span>
+              <strong>{profile.name}</strong>
+              <span>{profile.email}</span>
               <div className="profile-panel__actions">
-                <button type="button">Editar cuenta</button>
+                <button type="button" onClick={openProfileEditor}>Editar cuenta</button>
                 <button type="button" className="profile-panel__logout">Cerrar sesión</button>
               </div>
             </section>
@@ -134,6 +161,24 @@ function Header({ title }: HeaderProps) {
         </div>
       </div>
     </header>
+    {openPanel === 'edit-profile' && (
+      <section className="profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profile-edit-title">
+        <div className="profile-edit-modal__card">
+          <button type="button" className="profile-edit-modal__close" aria-label="Cerrar edición de perfil" onClick={closePanel}>×</button>
+          <p>PERFIL</p>
+          <h2 id="profile-edit-title">Editar perfil</h2>
+          <span>Actualiza los datos visibles de tu cuenta.</span>
+          <form onSubmit={saveProfile}>
+            <label>Nombre<input type="text" value={profileDraft.name} onChange={(event) => setProfileDraft((current) => ({ ...current, name: event.target.value }))} autoComplete="name" required /></label>
+            <label>Email<input type="email" value={profileDraft.email} onChange={(event) => setProfileDraft((current) => ({ ...current, email: event.target.value }))} autoComplete="email" required /></label>
+            <label>Nueva contraseña<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Dejar en blanco para no cambiarla" autoComplete="new-password" minLength={6} /></label>
+            <div className="profile-edit-modal__actions"><button type="button" onClick={closePanel}>Cancelar</button><button type="submit">Guardar cambios</button></div>
+          </form>
+          {profileMessage && <strong className="profile-edit-modal__message" role="status">{profileMessage}</strong>}
+        </div>
+      </section>
+    )}
+    </>
   )
 }
 
