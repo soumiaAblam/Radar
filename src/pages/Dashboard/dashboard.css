@@ -8,8 +8,9 @@
 .dashboard-intro > p:last-child { position: relative; z-index: 1; max-width: 760px; margin: .45rem 0 0; color: #68779b; line-height: 1.5; }
 .dashboard-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; margin-top: 1rem; align-items: start; }
 .dashboard-primary { display: grid; gap: 1rem; min-width: 0; }
+.summary-page { display: grid; gap: 1rem; }.summary-page .dashboard-intro { margin-bottom: 0; }.summary-page__lower-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 1rem; align-items: start; }
 
-@media (max-width: 1180px) { .dashboard-columns { grid-template-columns: 1fr; }.dashboard-content { padding-inline: 1.25rem; } }
+@media (max-width: 1180px) { .dashboard-columns, .summary-page__lower-grid { grid-template-columns: 1fr; }.dashboard-content { padding-inline: 1.25rem; } }
 @media (max-width: 780px) { .dashboard-layout { display: block; }.dashboard-content { padding: 1.1rem 1rem 2.5rem; }.dashboard-intro::after { right: -5rem; }.dashboard-intro h1 { font-size: 2rem; } }
 
 /* Espacios vacíos: conservan la composición de las tarjetas hasta cargar datos reales. */
