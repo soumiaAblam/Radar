@@ -1,0 +1,10 @@
+project_id = "vrbjpvebmtjbdpzpatdk"
+
+[functions.instagram-oauth-start]
+verify_jwt = true
+
+[functions.instagram-oauth-callback]
+verify_jwt = false
+
+[functions.instagram-sync]
+verify_jwt = true

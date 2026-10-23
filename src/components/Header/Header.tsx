@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import './header.css'
+import { ensureDemoSession, supabase } from '../../lib/supabase'
 
 interface HeaderProps { title: string }
 
@@ -8,6 +9,7 @@ type OpenPanel = 'accounts' | 'add-account' | 'notifications' | 'profile' | 'edi
 type LinkedAccount = {
   id: string
   handle: string
+  source: 'demo' | 'instagram'
 }
 
 type ProfileDetails = {
@@ -16,23 +18,66 @@ type ProfileDetails = {
 }
 
 const initialAccounts: LinkedAccount[] = [
-  { id: 'retorika-academy', handle: 'retorika_Academy' },
-  { id: 'retorika-media', handle: 'retorika_media' },
-  { id: 'retorika-lab', handle: 'retorika_lab' },
+  { id: 'retorika-academy', handle: 'retorika_Academy', source: 'demo' },
+  { id: 'retorika-media', handle: 'retorika_media', source: 'demo' },
+  { id: 'retorika-lab', handle: 'retorika_lab', source: 'demo' },
 ]
 
 function Header({ title }: HeaderProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [linkedAccounts, setLinkedAccounts] = useState(initialAccounts)
   const [selectedAccountId, setSelectedAccountId] = useState(initialAccounts[0].id)
-  const [instagramHandle, setInstagramHandle] = useState('')
   const [connectionMessage, setConnectionMessage] = useState('')
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [isSynchronizing, setIsSynchronizing] = useState(false)
   const [profile, setProfile] = useState<ProfileDetails>({ name: 'Usuario demo', email: 'demo@demo.com' })
   const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
   const [newPassword, setNewPassword] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
 
   const selectedAccount = linkedAccounts.find((account) => account.id === selectedAccountId) ?? linkedAccounts[0]
+
+  const loadConnectedAccounts = async () => {
+    try {
+      await ensureDemoSession()
+      const { data, error } = await supabase
+        .from('instagram_accounts')
+        .select('id, username')
+        .eq('connection_status', 'connected')
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      if (!data?.length) return
+
+      const connectedAccounts = data.map((account) => ({
+        id: account.id,
+        handle: account.username,
+        source: 'instagram' as const,
+      }))
+
+      setLinkedAccounts(connectedAccounts)
+      setSelectedAccountId((currentId) => connectedAccounts.some((account) => account.id === currentId) ? currentId : connectedAccounts[0].id)
+    } catch {
+      // La interfaz conserva las cuentas de demostración mientras se prepara Supabase.
+    }
+  }
+
+  useEffect(() => {
+    void loadConnectedAccounts()
+    const parameters = new URLSearchParams(window.location.search)
+    const instagramStatus = parameters.get('instagram')
+
+    if (instagramStatus === 'connected') {
+      setConnectionMessage('Cuenta de Instagram vinculada correctamente. Ya puedes sincronizar sus publicaciones.')
+      void loadConnectedAccounts()
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    if (instagramStatus === 'error') {
+      setConnectionMessage('No se ha podido completar la vinculación. Vuelve a intentarlo desde Añadir nueva cuenta.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const togglePanel = (panel: Exclude<OpenPanel, null>) => {
     setOpenPanel((currentPanel) => currentPanel === panel ? null : panel)
@@ -57,27 +102,48 @@ function Header({ title }: HeaderProps) {
     setProfileMessage('Perfil actualizado en esta sesión de demostración.')
   }
 
-  const requestAccountLink = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const cleanHandle = instagramHandle.trim().replace(/^@+/, '')
+  const signOut = () => {
+    window.location.assign('/')
+  }
 
-    if (!cleanHandle) {
-      setConnectionMessage('Escribe el nombre de usuario de Instagram para continuar.')
-      return
+  const requestAccountLink = async () => {
+    setConnectionMessage('')
+    setIsConnecting(true)
+
+    try {
+      await ensureDemoSession()
+      const { data, error } = await supabase.functions.invoke('instagram-oauth-start')
+
+      if (error || !data?.authorizationUrl) {
+        throw error ?? new Error('No se ha recibido la URL de autorización de Meta.')
+      }
+
+      window.location.assign(data.authorizationUrl as string)
+    } catch {
+      setConnectionMessage('No se ha podido iniciar la vinculación. Comprueba que el acceso anónimo y las funciones de Supabase estén desplegados.')
+      setIsConnecting(false)
     }
+  }
 
-    const existingAccount = linkedAccounts.find((account) => account.handle.toLowerCase() === cleanHandle.toLowerCase())
-    if (existingAccount) {
-      setSelectedAccountId(existingAccount.id)
-      setConnectionMessage(`@${cleanHandle} ya está vinculada a esta cuenta.`)
-      return
+  const synchronizeSelectedAccount = async () => {
+    if (!selectedAccount || selectedAccount.source !== 'instagram') return
+
+    setConnectionMessage('')
+    setIsSynchronizing(true)
+
+    try {
+      await ensureDemoSession()
+      const { data, error } = await supabase.functions.invoke('instagram-sync', {
+        body: { accountId: selectedAccount.id },
+      })
+
+      if (error) throw error
+      setConnectionMessage(`Sincronización completada: ${data.imported ?? 0} publicaciones importadas.`)
+    } catch {
+      setConnectionMessage('No se han podido sincronizar las publicaciones. Comprueba la conexión de Meta e inténtalo de nuevo.')
+    } finally {
+      setIsSynchronizing(false)
     }
-
-    const newAccount = { id: `instagram-${Date.now()}`, handle: cleanHandle }
-    setLinkedAccounts((accounts) => [...accounts, newAccount])
-    setSelectedAccountId(newAccount.id)
-    setInstagramHandle('')
-    setConnectionMessage(`@${cleanHandle} se ha vinculado en modo demostración y ya aparece en tu lista.`)
   }
 
   return (
@@ -102,6 +168,11 @@ function Header({ title }: HeaderProps) {
                   </button>
                 ))}
               </div>
+              {selectedAccount?.source === 'instagram' && (
+                <button type="button" className="account-sync-button" onClick={() => void synchronizeSelectedAccount()} disabled={isSynchronizing}>
+                  {isSynchronizing ? 'Sincronizando…' : 'Sincronizar publicaciones'}
+                </button>
+              )}
             </section>
           )}
         </div>
@@ -113,14 +184,12 @@ function Header({ title }: HeaderProps) {
           {openPanel === 'add-account' && (
             <section className="header-panel add-account-panel" aria-label="Añadir cuenta de Instagram">
               <div className="header-panel__title"><h2>Añadir cuenta</h2><button type="button" aria-label="Cerrar añadir cuenta" onClick={closePanel}>×</button></div>
-              <p className="add-account-panel__description">Escribe la cuenta de Instagram que quieres vincular.</p>
-              <form className="add-account-form" onSubmit={requestAccountLink}>
-                <label htmlFor="instagram-handle">Cuenta de Instagram</label>
-                <div><span aria-hidden="true">@</span><input id="instagram-handle" value={instagramHandle} onChange={(event) => setInstagramHandle(event.target.value)} placeholder="nombre_de_usuario" autoComplete="off" /></div>
-                <button type="submit">Solicitar vinculación</button>
-              </form>
+              <p className="add-account-panel__description">Conecta una cuenta profesional de Instagram mediante la autorización oficial de Meta.</p>
+              <button type="button" className="instagram-connect-button" onClick={() => void requestAccountLink()} disabled={isConnecting}>
+                {isConnecting ? 'Abriendo Meta…' : 'Conectar con Instagram'}
+              </button>
               {connectionMessage && <p className="add-account-panel__message" role="status">{connectionMessage}</p>}
-              <p className="add-account-panel__note">En la versión conectada, este paso abrirá la autorización oficial de Instagram.</p>
+              <p className="add-account-panel__note">Solo se mostrarán cuentas profesionales autorizadas en Meta.</p>
             </section>
           )}
         </div>
@@ -154,7 +223,7 @@ function Header({ title }: HeaderProps) {
               <span>{profile.email}</span>
               <div className="profile-panel__actions">
                 <button type="button" onClick={openProfileEditor}>Editar cuenta</button>
-                <button type="button" className="profile-panel__logout">Cerrar sesión</button>
+                <button type="button" className="profile-panel__logout" onClick={signOut}>Cerrar sesión</button>
               </div>
             </section>
           )}

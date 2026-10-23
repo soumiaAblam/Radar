@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import './Login.css'
 import './palette.css'
 import { useNavigate } from 'react-router-dom'
+import { ensureDemoSession } from '../../lib/supabase'
 
 const demoAccount = {
   email: 'demo@demo.com',
@@ -13,12 +14,10 @@ function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberSession, setRememberSession] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
 
-  // La validación es local: el acceso real se conectará cuando exista backend.
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!email || !password) {
       setMessage('Completa tu correo y contraseña para continuar.')
@@ -28,6 +27,13 @@ function LoginPage() {
     if (email.trim().toLowerCase() !== demoAccount.email || password !== demoAccount.password) {
       setMessage('Los datos no coinciden. Usa la cuenta de demostración indicada.')
       return
+    }
+
+    try {
+      await ensureDemoSession()
+    } catch {
+      // El acceso visual demo se conserva si Supabase todavía no tiene activado
+      // el acceso anónimo. La vinculación de Instagram avisará cómo activarlo.
     }
 
     navigate('/Dashboard')
@@ -83,7 +89,6 @@ function LoginPage() {
               <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Introduce tu contraseña" value={password} onChange={(event) => setPassword(event.target.value)} />
               <button type="button" className="password-toggle" onClick={() => setShowPassword((currentValue) => !currentValue)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{showPassword ? 'Ocultar' : 'Mostrar'}</button>
             </div>
-            <label className="checkbox-label" htmlFor="remember-session"><input id="remember-session" type="checkbox" checked={rememberSession} onChange={(event) => setRememberSession(event.target.checked)} /><span>Recordar mi sesión en este dispositivo</span></label>
             <button className="primary-button" type="submit">Entrar en Radar</button>
             {message && <p className="form-message" role="status">{message}</p>}
           </form>
