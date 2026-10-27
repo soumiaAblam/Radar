@@ -4,6 +4,7 @@ import DashboardPage from './pages/Dashboard/Dashboard'
 import AudiencePage from './pages/Audience/Audience'
 import PublicationPage from './pages/Publication/Publication'
 import RadarPage from './pages/Radar/Radar'
+import { AccountProvider } from './context/AccountContext'
 
 /* funcion LoginPage en Login.tsx */
 /*type PageName = 'login' | 'dashboard' | 'audience'*/
@@ -11,13 +12,15 @@ import RadarPage from './pages/Radar/Radar'
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/Dashboard" element={<DashboardPage />} />
-      <Route path="/audiencia" element={<AudiencePage />} />
-      <Route path="/publicaciones" element={<PublicationPage />} />
-      <Route path="/radar" element={<RadarPage />} />
-    </Routes>
+    <AccountProvider>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/Dashboard" element={<DashboardPage />} />
+        <Route path="/audiencia" element={<AudiencePage />} />
+        <Route path="/publicaciones" element={<PublicationPage />} />
+        <Route path="/radar" element={<RadarPage />} />
+      </Routes>
+    </AccountProvider>
   )
 }
 

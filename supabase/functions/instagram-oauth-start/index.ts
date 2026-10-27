@@ -73,7 +73,9 @@ Deno.serve(async (request) => {
     redirect_uri: redirectUri,
     response_type: 'code',
     state,
-    scope: 'instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement',
+    scope: 'instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement,business_management',
+    auth_type: 'rerequest',
+    return_scopes: 'true',
   })
   const loginConfigurationId = Deno.env.get('META_LOGIN_CONFIGURATION_ID')
 

@@ -1,32 +1,20 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import './header.css'
 import { ensureDemoSession, supabase } from '../../lib/supabase'
+import { useAccount } from '../../context/AccountContext'
 
 interface HeaderProps { title: string }
 
 type OpenPanel = 'accounts' | 'add-account' | 'notifications' | 'profile' | 'edit-profile' | null
-
-type LinkedAccount = {
-  id: string
-  handle: string
-  source: 'demo' | 'instagram'
-}
 
 type ProfileDetails = {
   name: string
   email: string
 }
 
-const initialAccounts: LinkedAccount[] = [
-  { id: 'retorika-academy', handle: 'retorika_Academy', source: 'demo' },
-  { id: 'retorika-media', handle: 'retorika_media', source: 'demo' },
-  { id: 'retorika-lab', handle: 'retorika_lab', source: 'demo' },
-]
-
 function Header({ title }: HeaderProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
-  const [linkedAccounts, setLinkedAccounts] = useState(initialAccounts)
-  const [selectedAccountId, setSelectedAccountId] = useState(initialAccounts[0].id)
+  const { accounts, selectedAccount, selectAccount, refreshAccounts } = useAccount()
   const [connectionMessage, setConnectionMessage] = useState('')
   const [isConnecting, setIsConnecting] = useState(false)
   const [isSynchronizing, setIsSynchronizing] = useState(false)
@@ -35,41 +23,13 @@ function Header({ title }: HeaderProps) {
   const [newPassword, setNewPassword] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
 
-  const selectedAccount = linkedAccounts.find((account) => account.id === selectedAccountId) ?? linkedAccounts[0]
-
-  const loadConnectedAccounts = async () => {
-    try {
-      await ensureDemoSession()
-      const { data, error } = await supabase
-        .from('instagram_accounts')
-        .select('id, username')
-        .eq('connection_status', 'connected')
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      if (!data?.length) return
-
-      const connectedAccounts = data.map((account) => ({
-        id: account.id,
-        handle: account.username,
-        source: 'instagram' as const,
-      }))
-
-      setLinkedAccounts(connectedAccounts)
-      setSelectedAccountId((currentId) => connectedAccounts.some((account) => account.id === currentId) ? currentId : connectedAccounts[0].id)
-    } catch {
-      // La interfaz conserva las cuentas de demostración mientras se prepara Supabase.
-    }
-  }
-
   useEffect(() => {
-    void loadConnectedAccounts()
     const parameters = new URLSearchParams(window.location.search)
     const instagramStatus = parameters.get('instagram')
 
     if (instagramStatus === 'connected') {
       setConnectionMessage('Cuenta de Instagram vinculada correctamente. Ya puedes sincronizar sus publicaciones.')
-      void loadConnectedAccounts()
+      void refreshAccounts()
       window.history.replaceState({}, '', window.location.pathname)
     }
 
@@ -162,9 +122,19 @@ function Header({ title }: HeaderProps) {
             <section className="header-panel account-panel" aria-label="Cuentas vinculadas">
               <div className="header-panel__title"><h2>Cuentas vinculadas</h2><button type="button" aria-label="Cerrar cuentas vinculadas" onClick={closePanel}>×</button></div>
               <div className="account-list">
-                {linkedAccounts.map((account) => (
-                  <button type="button" className={account.id === selectedAccountId ? 'account-list__item account-list__item--selected' : 'account-list__item'} key={account.id} onClick={() => setSelectedAccountId(account.id)}>
-                    <span aria-hidden="true">◎</span>@{account.handle}<b aria-hidden="true">{account.id === selectedAccountId ? '✓' : ''}</b>
+                {accounts.map((account) => (
+                  <button
+                    type="button"
+                    className={account.id === selectedAccount.id ? 'account-list__item account-list__item--selected' : 'account-list__item'}
+                    key={account.id}
+                    onClick={() => {
+                      selectAccount(account.id)
+                      closePanel()
+                    }}
+                  >
+                    <span className="account-list__platform" aria-hidden="true">◎</span>
+                    <span className="account-list__handle">@{account.handle}{account.source === 'demo' && <small>Cuenta demo</small>}</span>
+                    <b aria-hidden="true">{account.id === selectedAccount.id ? '✓' : ''}</b>
                   </button>
                 ))}
               </div>

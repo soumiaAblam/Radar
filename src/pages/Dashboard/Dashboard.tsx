@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import DataCollection from '../../components/DataCollection/DataCollection'
 import GrowthOverview from '../../components/GrowthOverview/GrowthOverview'
 import Header from '../../components/Header/Header'
@@ -9,16 +9,22 @@ import WeeklyPlan from '../../components/WeeklyPlan/WeeklyPlan'
 import { createSummaryAnalysis } from '../../lib/summaryAnalytics'
 import { loadDailyMetrics, saveDailyMetrics } from '../../lib/metricsStorage'
 import type { DailyMetrics } from '../../types/metrics'
+import { useAccount } from '../../context/AccountContext'
 import './dashboard.css'
 
 function DashboardPage() {
-  const [dailyRecords, setDailyRecords] = useState<DailyMetrics[]>(loadDailyMetrics)
+  const { selectedAccount } = useAccount()
+  const [dailyRecords, setDailyRecords] = useState<DailyMetrics[]>(() => loadDailyMetrics(selectedAccount.id))
   const analysis = useMemo(() => createSummaryAnalysis(dailyRecords), [dailyRecords])
+
+  useEffect(() => {
+    setDailyRecords(loadDailyMetrics(selectedAccount.id))
+  }, [selectedAccount.id])
 
   const saveRecord = (metrics: DailyMetrics) => {
     setDailyRecords((records) => {
       const nextRecords = [...records.filter((record) => record.date !== metrics.date), metrics].sort((first, second) => first.date.localeCompare(second.date))
-      saveDailyMetrics(nextRecords)
+      saveDailyMetrics(selectedAccount.id, nextRecords)
       return nextRecords
     })
   }

@@ -1,16 +1,21 @@
 import type { AudienceMetrics } from '../types/audience'
 
-const storageKey = 'retorika-radar-audience-metrics'
+const legacyStorageKey = 'retorika-radar-audience-metrics'
 
-export function loadAudienceMetrics(): AudienceMetrics[] {
+function storageKey(accountId: string) {
+  return `${legacyStorageKey}:${accountId}`
+}
+
+export function loadAudienceMetrics(accountId = 'retorika-academy'): AudienceMetrics[] {
   try {
-    const value = window.localStorage.getItem(storageKey)
+    const value = window.localStorage.getItem(storageKey(accountId))
+      ?? (accountId === 'retorika-academy' ? window.localStorage.getItem(legacyStorageKey) : null)
     return value ? JSON.parse(value) as AudienceMetrics[] : []
   } catch {
     return []
   }
 }
 
-export function saveAudienceMetrics(records: AudienceMetrics[]) {
-  window.localStorage.setItem(storageKey, JSON.stringify(records))
+export function saveAudienceMetrics(accountId: string, records: AudienceMetrics[]) {
+  window.localStorage.setItem(storageKey(accountId), JSON.stringify(records))
 }

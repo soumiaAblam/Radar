@@ -4,8 +4,12 @@ type MetaPage = {
   instagram_business_account?: {
     id: string
     username?: string
-    account_type?: string
   }
+}
+
+type MetaPermission = {
+  permission?: string
+  status?: string
 }
 
 async function sha256(value: string) {
@@ -108,15 +112,30 @@ Deno.serve(async (request) => {
     }
 
     const pagesUrl = new URL(`https://graph.facebook.com/${version}/me/accounts`)
-    pagesUrl.searchParams.set('fields', 'id,name,instagram_business_account{id,username,account_type}')
+    pagesUrl.searchParams.set('fields', 'id,name,instagram_business_account{id,username}')
     pagesUrl.searchParams.set('access_token', token)
     const pages = await metaJson(pagesUrl) as { data?: MetaPage[] }
+
+    let pagesShowListStatus = 'no comprobado'
+    try {
+      const permissionsUrl = new URL(`https://graph.facebook.com/${version}/me/permissions`)
+      permissionsUrl.searchParams.set('access_token', token)
+      const permissions = await metaJson(permissionsUrl) as { data?: MetaPermission[] }
+      pagesShowListStatus = permissions.data?.find((permission) => permission.permission === 'pages_show_list')?.status ?? 'no concedido'
+    } catch {
+      pagesShowListStatus = 'no disponible'
+    }
+
+    const pageCount = pages.data?.length ?? 0
+    const linkedInstagramCount = pages.data
+      ?.filter((page) => Boolean(page.instagram_business_account?.id))
+      .length ?? 0
     const instagramAccount = pages.data
       ?.map((page) => page.instagram_business_account)
       .find((account): account is NonNullable<MetaPage['instagram_business_account']> => Boolean(account?.id))
 
     if (!instagramAccount?.username) {
-      console.error('Instagram OAuth: Meta no ha devuelto una cuenta profesional vinculada.')
+      console.error(`Instagram OAuth: pages_show_list=${pagesShowListStatus}; Meta ha devuelto ${pageCount} página(s); ${linkedInstagramCount} contiene(n) una cuenta profesional de Instagram.`)
       return redirect(appOrigin, 'error', 'instagram_account_missing')
     }
 
@@ -131,13 +150,11 @@ Deno.serve(async (request) => {
       return redirect(appOrigin, 'error', 'account_unavailable')
     }
 
-    const accountType = instagramAccount.account_type?.toLowerCase() === 'creator' ? 'creator' : 'business'
     let accountId = existingAccount?.id
 
     if (accountId) {
       const { error } = await admin.from('instagram_accounts').update({
         username: instagramAccount.username,
-        account_type: accountType,
         connection_status: 'connected',
         updated_at: new Date().toISOString(),
       }).eq('id', accountId)
@@ -147,7 +164,6 @@ Deno.serve(async (request) => {
         user_id: oauthState.user_id,
         instagram_user_id: instagramAccount.id,
         username: instagramAccount.username,
-        account_type: accountType,
         connection_status: 'connected',
       }).select('id').single()
       if (error) throw error

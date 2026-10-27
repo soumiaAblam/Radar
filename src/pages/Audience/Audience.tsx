@@ -1,20 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AudienceDataCollection from '../../components/AudienceDataCollection/AudienceDataCollection'
 import AudienceOverview from '../../components/AudienceOverview/AudienceOverview'
 import Header from '../../components/Header/Header'
 import Sidebar from '../../components/Sidebar/Sidebar'
 import { loadAudienceMetrics, saveAudienceMetrics } from '../../lib/audienceStorage'
 import type { AudienceMetrics } from '../../types/audience'
+import { useAccount } from '../../context/AccountContext'
 import './Audience.css'
 
 function AudiencePage() {
-  const [records, setRecords] = useState<AudienceMetrics[]>(loadAudienceMetrics)
+  const { selectedAccount } = useAccount()
+  const [records, setRecords] = useState<AudienceMetrics[]>(() => loadAudienceMetrics(selectedAccount.id))
   const latestRecord = records.at(-1)
+
+  useEffect(() => {
+    setRecords(loadAudienceMetrics(selectedAccount.id))
+  }, [selectedAccount.id])
 
   const saveRecord = (metrics: AudienceMetrics) => {
     setRecords((currentRecords) => {
       const nextRecords = [...currentRecords.filter((record) => record.date !== metrics.date), metrics].sort((first, second) => first.date.localeCompare(second.date))
-      saveAudienceMetrics(nextRecords)
+      saveAudienceMetrics(selectedAccount.id, nextRecords)
       return nextRecords
     })
   }

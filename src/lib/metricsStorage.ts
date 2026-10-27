@@ -1,16 +1,21 @@
 import type { DailyMetrics } from '../types/metrics'
 
-const storageKey = 'retorika-radar-daily-metrics'
+const legacyStorageKey = 'retorika-radar-daily-metrics'
 
-export function loadDailyMetrics(): DailyMetrics[] {
+function storageKey(accountId: string) {
+  return `${legacyStorageKey}:${accountId}`
+}
+
+export function loadDailyMetrics(accountId = 'retorika-academy'): DailyMetrics[] {
   try {
-    const value = window.localStorage.getItem(storageKey)
+    const value = window.localStorage.getItem(storageKey(accountId))
+      ?? (accountId === 'retorika-academy' ? window.localStorage.getItem(legacyStorageKey) : null)
     return value ? JSON.parse(value) as DailyMetrics[] : []
   } catch {
     return []
   }
 }
 
-export function saveDailyMetrics(records: DailyMetrics[]) {
-  window.localStorage.setItem(storageKey, JSON.stringify(records))
+export function saveDailyMetrics(accountId: string, records: DailyMetrics[]) {
+  window.localStorage.setItem(storageKey(accountId), JSON.stringify(records))
 }
