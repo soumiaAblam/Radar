@@ -14,9 +14,10 @@ async function sha256(value: string) {
   return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-function redirect(appOrigin: string, status: 'connected' | 'error') {
+function redirect(appOrigin: string, status: 'connected' | 'error', reason?: string) {
   const target = new URL('/Dashboard', appOrigin)
   target.searchParams.set('instagram', status)
+  if (reason) target.searchParams.set('reason', reason)
   return Response.redirect(target, 302)
 }
 
@@ -48,7 +49,7 @@ Deno.serve(async (request) => {
   const code = callbackUrl.searchParams.get('code')
 
   if (callbackUrl.searchParams.get('error') || !state || !code) {
-    return redirect(appOrigin, 'error')
+    return redirect(appOrigin, 'error', 'meta_denied')
   }
 
   const admin = createClient(supabaseUrl, serviceRoleKey)
@@ -61,7 +62,8 @@ Deno.serve(async (request) => {
     .maybeSingle()
 
   if (stateError || !oauthState) {
-    return redirect(appOrigin, 'error')
+    console.error('Instagram OAuth: state inválido o caducado.')
+    return redirect(appOrigin, 'error', 'invalid_state')
   }
 
   const { error: consumeError } = await admin
@@ -71,7 +73,8 @@ Deno.serve(async (request) => {
     .is('used_at', null)
 
   if (consumeError) {
-    return redirect(appOrigin, 'error')
+    console.error('Instagram OAuth: no se ha podido consumir el estado.')
+    return redirect(appOrigin, 'error', 'state_unavailable')
   }
 
   try {
@@ -113,7 +116,8 @@ Deno.serve(async (request) => {
       .find((account): account is NonNullable<MetaPage['instagram_business_account']> => Boolean(account?.id))
 
     if (!instagramAccount?.username) {
-      return redirect(appOrigin, 'error')
+      console.error('Instagram OAuth: Meta no ha devuelto una cuenta profesional vinculada.')
+      return redirect(appOrigin, 'error', 'instagram_account_missing')
     }
 
     const { data: existingAccount, error: existingError } = await admin
@@ -123,7 +127,8 @@ Deno.serve(async (request) => {
       .maybeSingle()
 
     if (existingError || (existingAccount && existingAccount.user_id !== oauthState.user_id)) {
-      return redirect(appOrigin, 'error')
+      console.error('Instagram OAuth: la cuenta ya pertenece a otro usuario o no se ha podido leer.')
+      return redirect(appOrigin, 'error', 'account_unavailable')
     }
 
     const accountType = instagramAccount.account_type?.toLowerCase() === 'creator' ? 'creator' : 'business'
@@ -159,7 +164,8 @@ Deno.serve(async (request) => {
 
     if (tokenError) throw tokenError
     return redirect(appOrigin, 'connected')
-  } catch {
-    return redirect(appOrigin, 'error')
+  } catch (error) {
+    console.error('Instagram OAuth callback error:', error instanceof Error ? error.message : 'Error desconocido.')
+    return redirect(appOrigin, 'error', 'callback_failed')
   }
 })
