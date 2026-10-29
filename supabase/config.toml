@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.instagram-sync]
 verify_jwt = true
+
+[functions.instagram-direct-oauth-start]
+verify_jwt = true
+
+[functions.instagram-direct-oauth-callback]
+verify_jwt = false

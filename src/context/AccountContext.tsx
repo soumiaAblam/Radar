@@ -5,6 +5,7 @@ export type RadarAccount = {
   id: string
   handle: string
   source: 'demo' | 'instagram'
+  level: 'demo' | 'basic' | 'advanced'
 }
 
 type AccountContextValue = {
@@ -15,9 +16,9 @@ type AccountContextValue = {
 }
 
 const demoAccounts: RadarAccount[] = [
-  { id: 'retorika-academy', handle: 'Retorika_academy', source: 'demo' },
-  { id: 'retorika-media', handle: 'Retorika_home', source: 'demo' },
-  { id: 'retorika-lab', handle: 'Retorika_business', source: 'demo' },
+  { id: 'retorika-academy', handle: 'Retorika_academy', source: 'demo', level: 'demo' },
+  { id: 'retorika-media', handle: 'Retorika_home', source: 'demo', level: 'demo' },
+  { id: 'retorika-lab', handle: 'Retorika_business', source: 'demo', level: 'demo' },
 ]
 
 const selectedAccountStorageKey = 'retorika-radar-selected-account'
@@ -38,11 +39,25 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const refreshAccounts = async () => {
     try {
       await ensureDemoSession()
-      const { data, error } = await supabase
+      const accountsResult = await supabase
         .from('instagram_accounts')
-        .select('id, username')
+        .select('id, username, auth_provider')
         .eq('connection_status', 'connected')
         .order('created_at', { ascending: true })
+      let data: Array<{ id: string, username: string, auth_provider?: string }> | null = accountsResult.data
+      let error = accountsResult.error
+
+      // Mantiene la aplicación operativa mientras se aplica la migración que
+      // incorpora auth_provider en instalaciones ya existentes.
+      if (error?.code === '42703') {
+        const legacyQuery = await supabase
+          .from('instagram_accounts')
+          .select('id, username')
+          .eq('connection_status', 'connected')
+          .order('created_at', { ascending: true })
+        data = legacyQuery.data
+        error = legacyQuery.error
+      }
 
       if (error) throw error
 
@@ -50,6 +65,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         id: account.id,
         handle: account.username,
         source: 'instagram',
+        level: account.auth_provider === 'instagram' ? 'basic' : 'advanced',
       }))
 
       setAccounts([...instagramAccounts, ...demoAccounts])

@@ -45,9 +45,9 @@ async function readJson(url: URL) {
   return payload
 }
 
-async function getInsights(version: string, mediaId: string, accessToken: string) {
+async function getInsights(version: string, mediaId: string, accessToken: string, graphHost = 'graph.facebook.com') {
   try {
-    const url = new URL(`https://graph.facebook.com/${version}/${mediaId}/insights`)
+    const url = new URL(`https://${graphHost}/${version}/${mediaId}/insights`)
     url.searchParams.set('metric', 'reach,saved,shares,views')
     url.searchParams.set('access_token', accessToken)
     const result = await readJson(url) as { data?: Insight[] }
@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
 
   const { data: account, error: accountError } = await admin
     .from('instagram_accounts')
-    .select('id, instagram_user_id')
+    .select('id, instagram_user_id, auth_provider')
     .eq('id', accountId)
     .eq('user_id', userData.user.id)
     .eq('connection_status', 'connected')
@@ -113,14 +113,17 @@ Deno.serve(async (request) => {
 
   try {
     const version = Deno.env.get('META_GRAPH_VERSION') ?? 'v24.0'
-    const mediaUrl = new URL(`https://graph.facebook.com/${version}/${account.instagram_user_id}/media`)
+    const graphHost = account.auth_provider === 'instagram' ? 'graph.instagram.com' : 'graph.facebook.com'
+    const mediaUrl = new URL(`https://${graphHost}/${version}/${account.instagram_user_id}/media`)
     mediaUrl.searchParams.set('fields', 'id,caption,media_type,media_product_type,timestamp,like_count,comments_count')
     mediaUrl.searchParams.set('limit', '100')
     mediaUrl.searchParams.set('access_token', storedToken.access_token)
     const mediaResponse = await readJson(mediaUrl) as { data?: InstagramMedia[] }
 
     const records = await Promise.all((mediaResponse.data ?? []).map(async (media) => {
-      const insights = await getInsights(version, media.id, storedToken.access_token)
+      const insights = account.auth_provider === 'facebook'
+        ? await getInsights(version, media.id, storedToken.access_token, graphHost)
+        : {}
       const publishedAt = media.timestamp ? new Date(media.timestamp) : null
       return {
         account_id: account.id,

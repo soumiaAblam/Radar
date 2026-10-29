@@ -12,11 +12,25 @@ type ProfileDetails = {
   email: string
 }
 
+async function readableFunctionError(error: unknown, fallback: string) {
+  const context = (error as { context?: Response })?.context
+  if (context) {
+    try {
+      const payload = await context.clone().json() as { error?: string }
+      if (payload.error) return payload.error
+    } catch {
+      // Conservamos el mensaje seguro por defecto si la respuesta no es JSON.
+    }
+  }
+  if (error instanceof Error && error.message && !error.message.includes('Failed to send a request to the Edge Function')) return error.message
+  return fallback
+}
+
 function Header({ title }: HeaderProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const { accounts, selectedAccount, selectAccount, refreshAccounts } = useAccount()
   const [connectionMessage, setConnectionMessage] = useState('')
-  const [isConnecting, setIsConnecting] = useState(false)
+  const [connectingLevel, setConnectingLevel] = useState<'basic' | 'advanced' | null>(null)
   const [isSynchronizing, setIsSynchronizing] = useState(false)
   const [profile, setProfile] = useState<ProfileDetails>({ name: 'Usuario demo', email: 'demo@demo.com' })
   const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
@@ -66,22 +80,26 @@ function Header({ title }: HeaderProps) {
     window.location.assign('/')
   }
 
-  const requestAccountLink = async () => {
+  const requestAccountLink = async (level: 'basic' | 'advanced') => {
     setConnectionMessage('')
-    setIsConnecting(true)
+    setConnectingLevel(level)
 
     try {
       await ensureDemoSession()
-      const { data, error } = await supabase.functions.invoke('instagram-oauth-start')
+      const functionName = level === 'basic' ? 'instagram-direct-oauth-start' : 'instagram-oauth-start'
+      const { data, error } = await supabase.functions.invoke(functionName)
 
       if (error || !data?.authorizationUrl) {
-        throw error ?? new Error('No se ha recibido la URL de autorización de Meta.')
+        throw error ?? new Error('No se ha recibido la URL de autorización de Instagram.')
       }
 
       window.location.assign(data.authorizationUrl as string)
-    } catch {
-      setConnectionMessage('No se ha podido iniciar la vinculación. Comprueba que el acceso anónimo y las funciones de Supabase estén desplegados.')
-      setIsConnecting(false)
+    } catch (error) {
+      const fallback = level === 'basic'
+        ? 'La conexión básica de Instagram aún no está activada. Configura Instagram Login y vuelve a intentarlo.'
+        : 'No se ha podido iniciar la conexión avanzada con Meta. Vuelve a intentarlo.'
+      setConnectionMessage(await readableFunctionError(error, fallback))
+      setConnectingLevel(null)
     }
   }
 
@@ -133,14 +151,14 @@ function Header({ title }: HeaderProps) {
                     }}
                   >
                     <span className="account-list__platform" aria-hidden="true">◎</span>
-                    <span className="account-list__handle">@{account.handle}{account.source === 'demo' && <small>Cuenta demo</small>}</span>
+                    <span className="account-list__handle">@{account.handle}{account.source === 'demo' && <small>Cuenta demo</small>}{account.level === 'basic' && <small>Cuenta básica</small>}{account.level === 'advanced' && <small>Análisis avanzado</small>}</span>
                     <b aria-hidden="true">{account.id === selectedAccount.id ? '✓' : ''}</b>
                   </button>
                 ))}
               </div>
               {selectedAccount?.source === 'instagram' && (
                 <button type="button" className="account-sync-button" onClick={() => void synchronizeSelectedAccount()} disabled={isSynchronizing}>
-                  {isSynchronizing ? 'Sincronizando…' : 'Sincronizar publicaciones'}
+                  {isSynchronizing ? 'Sincronizando…' : selectedAccount.level === 'basic' ? 'Sincronizar publicaciones básicas' : 'Sincronizar métricas y publicaciones'}
                 </button>
               )}
             </section>
@@ -154,12 +172,27 @@ function Header({ title }: HeaderProps) {
           {openPanel === 'add-account' && (
             <section className="header-panel add-account-panel" aria-label="Añadir cuenta de Instagram">
               <div className="header-panel__title"><h2>Añadir cuenta</h2><button type="button" aria-label="Cerrar añadir cuenta" onClick={closePanel}>×</button></div>
-              <p className="add-account-panel__description">Conecta una cuenta profesional de Instagram mediante la autorización oficial de Meta.</p>
-              <button type="button" className="instagram-connect-button" onClick={() => void requestAccountLink()} disabled={isConnecting}>
-                {isConnecting ? 'Abriendo Meta…' : 'Conectar con Instagram'}
-              </button>
+              <p className="add-account-panel__description">Elige el nivel que mejor encaja con tu cuenta profesional de Instagram.</p>
+              <div className="connection-levels">
+                <article className="connection-level connection-level--basic">
+                  <div className="connection-level__heading"><strong>Cuenta básica</strong><span>SOLO INSTAGRAM</span></div>
+                  <p>Conecta sin Facebook para ver tu perfil, publicaciones, Me gusta y comentarios.</p>
+                  <small>No incluye alcance, impresiones ni análisis con IA.</small>
+                  <button type="button" className="instagram-connect-button instagram-connect-button--secondary" onClick={() => void requestAccountLink('basic')} disabled={connectingLevel !== null}>
+                    {connectingLevel === 'basic' ? 'Abriendo Instagram…' : 'Conectar cuenta básica'}
+                  </button>
+                </article>
+                <article className="connection-level connection-level--advanced">
+                  <div className="connection-level__heading"><strong>Cuenta avanzada</strong><span>ANÁLISIS IA</span></div>
+                  <p>Conecta mediante Meta/Facebook una cuenta profesional vinculada a una Página.</p>
+                  <small>Incluye métricas, alcance, publicaciones y análisis estratégico con IA.</small>
+                  <button type="button" className="instagram-connect-button" onClick={() => void requestAccountLink('advanced')} disabled={connectingLevel !== null}>
+                    {connectingLevel === 'advanced' ? 'Abriendo Meta…' : 'Activar análisis avanzado'}
+                  </button>
+                </article>
+              </div>
               {connectionMessage && <p className="add-account-panel__message" role="status">{connectionMessage}</p>}
-              <p className="add-account-panel__note">Solo se mostrarán cuentas profesionales autorizadas en Meta.</p>
+              <p className="add-account-panel__note">Ambos niveles admiten solo cuentas profesionales de Instagram: Business o Creator. RADAR nunca recibe tu contraseña.</p>
             </section>
           )}
         </div>

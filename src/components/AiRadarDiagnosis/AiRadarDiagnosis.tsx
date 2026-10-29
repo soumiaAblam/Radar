@@ -31,7 +31,7 @@ function AiRadarDiagnosis({ account, recordsCount }: Props) {
     setDiagnosis(null)
     setGeneratedAt(null)
     setError('')
-    if (account.source !== 'instagram') return () => { active = false }
+    if (account.source !== 'instagram' || account.level !== 'advanced') return () => { active = false }
 
     const loadSavedDiagnosis = async () => {
       try {
@@ -81,6 +81,15 @@ function AiRadarDiagnosis({ account, recordsCount }: Props) {
       <section className="ai-radar ai-radar--setup" aria-labelledby="ai-radar-title">
         <div><p className="section-kicker">AGENTE IA</p><h2 id="ai-radar-title">Análisis personalizado</h2><p>Conecta una cuenta profesional de Instagram y sincroniza sus publicaciones para activar el análisis con IA.</p></div>
         <span className="ai-radar__badge">Disponible para cuentas conectadas</span>
+      </section>
+    )
+  }
+
+  if (account.level === 'basic') {
+    return (
+      <section className="ai-radar ai-radar--setup" aria-labelledby="ai-radar-title">
+        <div><p className="section-kicker">AGENTE IA</p><h2 id="ai-radar-title">Análisis avanzado no activado</h2><p>@{account.handle} está conectada como cuenta básica. Sin Facebook, Instagram no facilita las métricas de alcance e impresiones necesarias para un diagnóstico fiable.</p></div>
+        <span className="ai-radar__badge">Disponible con cuenta avanzada</span>
       </section>
     )
   }

@@ -185,12 +185,15 @@ Deno.serve(async (request) => {
 
   const { data: account, error: accountError } = await admin
     .from('instagram_accounts')
-    .select('id, username')
+    .select('id, username, auth_provider')
     .eq('id', accountId)
     .eq('user_id', userData.user.id)
     .eq('connection_status', 'connected')
     .maybeSingle()
   if (accountError || !account) return response({ error: 'La cuenta no está disponible para analizar.' }, 404, allowedOrigin)
+  if (account.auth_provider === 'instagram') {
+    return response({ error: 'El análisis IA requiere una cuenta avanzada con métricas de Meta.' }, 403, allowedOrigin)
+  }
 
   const week = weekRange()
   const { data: savedDiagnosis } = await admin
@@ -218,7 +221,9 @@ Deno.serve(async (request) => {
   await admin.from('weekly_diagnoses').upsert({ account_id: account.id, week_start: week.start, week_end: week.end, status: 'pending', analysis: {}, provider: 'gemini' }, { onConflict: 'account_id,week_start' })
 
   try {
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
+    // Gemini 2.5 is only available to projects that used it previously.
+    // Flash-Lite is the current free-tier option for new Gemini API projects.
+    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.1-flash-lite'
     const result = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
