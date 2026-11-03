@@ -3,12 +3,9 @@ import type { FormEvent } from 'react'
 import './Login.css'
 import './palette.css'
 import { useNavigate } from 'react-router-dom'
-import { ensureDemoSession } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
-const demoAccount = {
-  email: 'demo@demo.com',
-  password: 'demo123',
-}
+const demoEmail = 'demo@demo.com'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -24,18 +21,16 @@ function LoginPage() {
       return
     }
 
-    if (email.trim().toLowerCase() !== demoAccount.email || password !== demoAccount.password) {
-      setMessage('Los datos no coinciden. Usa la cuenta de demostración indicada.')
+    if (email.trim().toLowerCase() !== demoEmail) {
+      setMessage('Este entorno está reservado para la cuenta de demostración indicada.')
       return
     }
 
-    try {
-      await ensureDemoSession()
-    } catch {
-      // El acceso visual demo se conserva si Supabase todavía no tiene activado
-      // el acceso anónimo. La vinculación de Instagram avisará cómo activarlo.
+    const { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password })
+    if (error) {
+      setMessage('No se ha podido iniciar sesión. Comprueba la cuenta demo y su contraseña configurada en Supabase Auth.')
+      return
     }
-
     navigate('/Dashboard')
   }
 
@@ -73,7 +68,7 @@ function LoginPage() {
             <p className="eyebrow">RETORIKA RADAR</p>
             <h2 id="access-title">Bienvenida de nuevo</h2>
             <p className="access-panel__intro">Accede a tu espacio de análisis y crecimiento.</p>
-            <p className="demo-access">Cuenta demo: <strong>demo@demo.com</strong> · Contraseña: <strong>demo123</strong></p>
+            <p className="demo-access">Cuenta demo: <strong>demo@demo.com</strong></p>
           </header>
 
           {/* El envío del formulario ejecuta handleSubmit y valida el acceso. */}

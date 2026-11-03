@@ -43,6 +43,9 @@ Deno.serve(async (request) => {
   const admin = createClient(supabaseUrl, serviceRoleKey)
   const { data: userData, error: userError } = await admin.auth.getUser(accessToken)
   if (userError || !userData.user) return json({ error: 'La sesión de RADAR ya no es válida.' }, 401, allowedOrigin)
+  if (userData.user.email?.toLowerCase() === (Deno.env.get('DEMO_ACCOUNT_EMAIL') ?? 'demo@demo.com').toLowerCase()) {
+    return json({ error: 'La cuenta demo usa un enlace de autorización exclusivo para la propietaria de Retorika_Academy.' }, 403, allowedOrigin)
+  }
 
   const state = `${crypto.randomUUID()}${crypto.randomUUID().replaceAll('-', '')}`
   const { error: stateError } = await admin.from('instagram_oauth_states').insert({

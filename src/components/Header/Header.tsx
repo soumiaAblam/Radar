@@ -31,6 +31,9 @@ function Header({ title }: HeaderProps) {
   const { accounts, selectedAccount, selectAccount, refreshAccounts } = useAccount()
   const [connectionMessage, setConnectionMessage] = useState('')
   const [connectingLevel, setConnectingLevel] = useState<'basic' | 'advanced' | null>(null)
+  const [isProtectedDemo, setIsProtectedDemo] = useState(false)
+  const [demoAuthorizationLink, setDemoAuthorizationLink] = useState('')
+  const [isGeneratingDemoLink, setIsGeneratingDemoLink] = useState(false)
   const [isSynchronizing, setIsSynchronizing] = useState(false)
   const [profile, setProfile] = useState<ProfileDetails>({ name: 'Usuario demo', email: 'demo@demo.com' })
   const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
@@ -38,6 +41,9 @@ function Header({ title }: HeaderProps) {
   const [profileMessage, setProfileMessage] = useState('')
 
   useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      setIsProtectedDemo(data.user?.email?.toLowerCase() === 'demo@demo.com')
+    })
     const parameters = new URLSearchParams(window.location.search)
     const instagramStatus = parameters.get('instagram')
 
@@ -48,7 +54,10 @@ function Header({ title }: HeaderProps) {
     }
 
     if (instagramStatus === 'error') {
-      setConnectionMessage('No se ha podido completar la vinculación. Vuelve a intentarlo desde Añadir nueva cuenta.')
+      const reason = parameters.get('reason')
+      setConnectionMessage(reason === 'meta_denied'
+        ? 'La autorización fue cancelada. La reserva de Retorika_Academy se conserva para volver a intentarlo.'
+        : 'No se ha podido completar la vinculación. La reserva de Retorika_Academy se conserva para volver a intentarlo.')
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
@@ -76,7 +85,8 @@ function Header({ title }: HeaderProps) {
     setProfileMessage('Perfil actualizado en esta sesión de demostración.')
   }
 
-  const signOut = () => {
+  const signOut = async () => {
+    await supabase.auth.signOut()
     window.location.assign('/')
   }
 
@@ -100,6 +110,32 @@ function Header({ title }: HeaderProps) {
         : 'No se ha podido iniciar la conexión avanzada con Meta. Vuelve a intentarlo.'
       setConnectionMessage(await readableFunctionError(error, fallback))
       setConnectingLevel(null)
+    }
+  }
+
+  const generateDemoAuthorizationLink = async () => {
+    setConnectionMessage('')
+    setDemoAuthorizationLink('')
+    setIsGeneratingDemoLink(true)
+    try {
+      await ensureDemoSession()
+      const { data, error } = await supabase.functions.invoke('demo-instagram-link-create')
+      if (error || !data?.authorizationUrl) throw error ?? new Error('No se ha recibido el enlace de autorización.')
+      setDemoAuthorizationLink(data.authorizationUrl as string)
+      setConnectionMessage('Enlace creado. Envíalo únicamente a la propietaria autenticada de @Retorika_Academy; caduca en 24 horas.')
+    } catch (error) {
+      setConnectionMessage(await readableFunctionError(error, 'No se ha podido generar el enlace seguro. Comprueba que la migración y la función estén desplegadas.'))
+    } finally {
+      setIsGeneratingDemoLink(false)
+    }
+  }
+
+  const copyDemoAuthorizationLink = async () => {
+    try {
+      await navigator.clipboard.writeText(demoAuthorizationLink)
+      setConnectionMessage('Enlace copiado. Compártelo con la propietaria de @Retorika_Academy.')
+    } catch {
+      setConnectionMessage('Copia manualmente el enlace mostrado y envíalo a la propietaria de @Retorika_Academy.')
     }
   }
 
@@ -134,7 +170,7 @@ function Header({ title }: HeaderProps) {
           <button type="button" className="account-selector" aria-expanded={openPanel === 'accounts'} onClick={() => togglePanel('accounts')}>
             <span className="account-selector__platform" aria-hidden="true">◎</span>
             @{selectedAccount.handle}
-            <span aria-hidden="true">⌄</span>
+            <svg className={openPanel === 'accounts' ? 'header-chevron header-chevron--open' : 'header-chevron'} viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
           </button>
           {openPanel === 'accounts' && (
             <section className="header-panel account-panel" aria-label="Cuentas vinculadas">
@@ -151,12 +187,19 @@ function Header({ title }: HeaderProps) {
                     }}
                   >
                     <span className="account-list__platform" aria-hidden="true">◎</span>
-                    <span className="account-list__handle">@{account.handle}{account.source === 'demo' && <small>Cuenta demo</small>}{account.level === 'basic' && <small>Cuenta básica</small>}{account.level === 'advanced' && <small>Análisis avanzado</small>}</span>
+                    <span className="account-list__handle">@{account.handle}
+                      {account.connectionStatus === 'pending' && <small>Pendiente de autorización</small>}
+                      {account.connectionStatus === 'expired' && <small>Reautorización necesaria</small>}
+                      {account.connectionStatus === 'error' && <small>Autorización pendiente</small>}
+                      {!account.connectionStatus && account.source === 'demo' && <small>Cuenta demo</small>}
+                      {account.connectionStatus === 'connected' && account.level === 'basic' && <small>Cuenta básica</small>}
+                      {account.connectionStatus === 'connected' && account.level === 'advanced' && <small>Análisis avanzado</small>}
+                    </span>
                     <b aria-hidden="true">{account.id === selectedAccount.id ? '✓' : ''}</b>
                   </button>
                 ))}
               </div>
-              {selectedAccount?.source === 'instagram' && (
+              {selectedAccount?.source === 'instagram' && selectedAccount.connectionStatus === 'connected' && (
                 <button type="button" className="account-sync-button" onClick={() => void synchronizeSelectedAccount()} disabled={isSynchronizing}>
                   {isSynchronizing ? 'Sincronizando…' : selectedAccount.level === 'basic' ? 'Sincronizar publicaciones básicas' : 'Sincronizar métricas y publicaciones'}
                 </button>
@@ -167,11 +210,20 @@ function Header({ title }: HeaderProps) {
 
         <div className="header-popover">
           <button type="button" className="account-add-button" aria-expanded={openPanel === 'add-account'} onClick={() => togglePanel('add-account')}>
-            <span aria-hidden="true">+</span> Añadir nueva cuenta
+            <span aria-hidden="true">+</span> {isProtectedDemo ? 'Vincular Retorika_Academy' : 'Añadir nueva cuenta'}
           </button>
           {openPanel === 'add-account' && (
             <section className="header-panel add-account-panel" aria-label="Añadir cuenta de Instagram">
               <div className="header-panel__title"><h2>Añadir cuenta</h2><button type="button" aria-label="Cerrar añadir cuenta" onClick={closePanel}>×</button></div>
+              {isProtectedDemo ? (<div className="demo-link-panel">
+                <p className="add-account-panel__description">La cuenta demo está reservada exclusivamente para <strong>@Retorika_Academy</strong>.</p>
+                <p>Genera un enlace de un solo uso para que su propietaria complete el inicio de sesión oficial de Meta. RADAR nunca solicita ni recibe contraseñas de Instagram.</p>
+                <button type="button" className="instagram-connect-button" onClick={() => void generateDemoAuthorizationLink()} disabled={isGeneratingDemoLink}>
+                  {isGeneratingDemoLink ? 'Generando enlace…' : 'Generar enlace para la propietaria'}
+                </button>
+                {demoAuthorizationLink && <div className="demo-link-panel__url"><input aria-label="Enlace de autorización para la propietaria" value={demoAuthorizationLink} readOnly /><button type="button" onClick={() => void copyDemoAuthorizationLink()}>Copiar enlace</button></div>}
+                <p className="add-account-panel__note">No se puede añadir, eliminar ni sustituir otra cuenta de Instagram desde esta cuenta demo.</p>
+              </div>) : (<>
               <p className="add-account-panel__description">Elige el nivel que mejor encaja con tu cuenta profesional de Instagram.</p>
               <div className="connection-levels">
                 <article className="connection-level connection-level--basic">
@@ -193,13 +245,15 @@ function Header({ title }: HeaderProps) {
               </div>
               {connectionMessage && <p className="add-account-panel__message" role="status">{connectionMessage}</p>}
               <p className="add-account-panel__note">Ambos niveles admiten solo cuentas profesionales de Instagram: Business o Creator. RADAR nunca recibe tu contraseña.</p>
+              </>)}
+              {isProtectedDemo && connectionMessage && <p className="add-account-panel__message" role="status">{connectionMessage}</p>}
             </section>
           )}
         </div>
       </div>
 
       <div className="app-header__actions">
-        <button type="button" className="period-button">▣ Últimos 30 días <span aria-hidden="true">⌄</span></button>
+        <button type="button" className="period-button">▣ Últimos 30 días <svg className="header-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>
         <div className="header-popover">
           <button type="button" className="icon-button" aria-label="Notificaciones" aria-expanded={openPanel === 'notifications'} onClick={() => togglePanel('notifications')}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>

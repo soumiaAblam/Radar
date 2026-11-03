@@ -9,11 +9,7 @@ if (!supabaseUrl || !supabasePublishableKey) {
 
 export const supabase = createClient(supabaseUrl, supabasePublishableKey)
 
-/**
- * El acceso visual de RADAR sigue siendo la cuenta demo. Esta sesión anónima
- * solo aporta un identificador de Supabase para que las cuentas y métricas
- * conectadas respeten las políticas de seguridad de la base de datos.
- */
+/** Devuelve una sesión autenticada; las vinculaciones nunca se asignan a anónimos. */
 export async function ensureDemoSession() {
   const { data: currentSession, error: sessionError } = await supabase.auth.getSession()
 
@@ -21,15 +17,9 @@ export async function ensureDemoSession() {
     throw sessionError
   }
 
-  if (currentSession.session) {
+  if (currentSession.session && !currentSession.session.user.is_anonymous) {
     return currentSession.session
   }
-
-  const { data, error } = await supabase.auth.signInAnonymously()
-
-  if (error || !data.session) {
-    throw error ?? new Error('No se ha podido crear la sesión segura de demostración.')
-  }
-
-  return data.session
+  if (currentSession.session?.user.is_anonymous) await supabase.auth.signOut()
+  throw new Error('Inicia sesión para acceder a las cuentas vinculadas.')
 }

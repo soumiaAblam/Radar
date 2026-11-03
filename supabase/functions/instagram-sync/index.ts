@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
 
   const { data: account, error: accountError } = await admin
     .from('instagram_accounts')
-    .select('id, instagram_user_id, auth_provider')
+    .select('id, instagram_user_id, auth_provider, user_id')
     .eq('id', accountId)
     .eq('user_id', userData.user.id)
     .eq('connection_status', 'connected')
@@ -107,7 +107,17 @@ Deno.serve(async (request) => {
     .eq('account_id', account.id)
     .maybeSingle()
 
-  if (tokenError || !storedToken?.access_token || (storedToken.expires_at && new Date(storedToken.expires_at) <= new Date())) {
+  const tokenExpired = Boolean(storedToken?.expires_at && new Date(storedToken.expires_at) <= new Date())
+  if (tokenError || !storedToken?.access_token || tokenExpired) {
+    if (tokenExpired) {
+      const now = new Date().toISOString()
+      await admin.from('instagram_accounts').update({ connection_status: 'expired', updated_at: now }).eq('id', account.id)
+      await admin.from('demo_instagram_bindings').update({
+        connection_status: 'expired',
+        reauthorization_required_at: now,
+        updated_at: now,
+      }).eq('internal_user_id', account.user_id)
+    }
     return response({ error: 'La autorización de Meta ha caducado. Vuelve a conectar la cuenta.' }, 401, allowedOrigin)
   }
 

@@ -6,6 +6,7 @@ export type RadarAccount = {
   handle: string
   source: 'demo' | 'instagram'
   level: 'demo' | 'basic' | 'advanced'
+  connectionStatus?: 'pending' | 'connected' | 'expired' | 'error'
 }
 
 type AccountContextValue = {
@@ -39,12 +40,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const refreshAccounts = async () => {
     try {
       await ensureDemoSession()
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData.user || userData.user.is_anonymous) throw userError ?? new Error('Sesión no disponible.')
+      const isProtectedDemo = userData.user.email?.toLowerCase() === 'demo@demo.com'
       const accountsResult = await supabase
         .from('instagram_accounts')
-        .select('id, username, auth_provider')
-        .eq('connection_status', 'connected')
+        .select('id, username, auth_provider, connection_status')
+        .in('connection_status', isProtectedDemo ? ['pending', 'connected', 'expired', 'error'] : ['connected'])
         .order('created_at', { ascending: true })
-      let data: Array<{ id: string, username: string, auth_provider?: string }> | null = accountsResult.data
+      let data: Array<{ id: string, username: string, auth_provider?: string, connection_status?: 'pending' | 'connected' | 'expired' | 'error' }> | null = accountsResult.data
       let error = accountsResult.error
 
       // Mantiene la aplicación operativa mientras se aplica la migración que
@@ -52,8 +56,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       if (error?.code === '42703') {
         const legacyQuery = await supabase
           .from('instagram_accounts')
-          .select('id, username')
-          .eq('connection_status', 'connected')
+          .select('id, username, connection_status')
+          .in('connection_status', isProtectedDemo ? ['pending', 'connected', 'expired', 'error'] : ['connected'])
           .order('created_at', { ascending: true })
         data = legacyQuery.data
         error = legacyQuery.error
@@ -66,14 +70,16 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         handle: account.username,
         source: 'instagram',
         level: account.auth_provider === 'instagram' ? 'basic' : 'advanced',
+        connectionStatus: account.connection_status,
       }))
 
-      setAccounts([...instagramAccounts, ...demoAccounts])
+      const nextAccounts = isProtectedDemo ? instagramAccounts : [...instagramAccounts, ...demoAccounts]
+      setAccounts(nextAccounts.length ? nextAccounts : demoAccounts)
       setSelectedAccountId((currentId) => {
-        const accountStillExists = [...instagramAccounts, ...demoAccounts].some((account) => account.id === currentId)
+        const accountStillExists = nextAccounts.some((account) => account.id === currentId)
         return instagramAccounts.some((account) => account.id === currentId)
           ? currentId
-          : instagramAccounts[0]?.id ?? (accountStillExists ? currentId : demoAccounts[0].id)
+          : nextAccounts[0]?.id ?? (accountStillExists ? currentId : demoAccounts[0].id)
       })
     } catch {
       setAccounts(demoAccounts)
@@ -82,6 +88,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshAccounts()
+    const { data: listener } = supabase.auth.onAuthStateChange(() => { void refreshAccounts() })
+    return () => listener.subscription.unsubscribe()
   }, [])
 
   const selectAccount = (accountId: string) => {

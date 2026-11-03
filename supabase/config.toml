@@ -14,3 +14,12 @@ verify_jwt = true
 
 [functions.instagram-direct-oauth-callback]
 verify_jwt = false
+
+[functions.demo-instagram-link-create]
+verify_jwt = true
+
+[functions.demo-instagram-link-start]
+verify_jwt = false
+
+[functions.demo-instagram-link-callback]
+verify_jwt = false
