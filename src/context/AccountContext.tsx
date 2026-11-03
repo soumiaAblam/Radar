@@ -6,6 +6,7 @@ export type RadarAccount = {
   handle: string
   source: 'demo' | 'instagram'
   level: 'demo' | 'basic' | 'advanced'
+  isPrimary?: boolean
   connectionStatus?: 'pending' | 'connected' | 'expired' | 'error'
 }
 
@@ -70,6 +71,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         handle: account.username,
         source: 'instagram',
         level: account.auth_provider === 'instagram' ? 'basic' : 'advanced',
+        isPrimary: isProtectedDemo && account.username.toLowerCase() === 'retorika_academy',
         connectionStatus: account.connection_status,
       }))
 

@@ -97,7 +97,9 @@ function Header({ title }: HeaderProps) {
     try {
       await ensureDemoSession()
       const functionName = level === 'basic' ? 'instagram-direct-oauth-start' : 'instagram-oauth-start'
-      const { data, error } = await supabase.functions.invoke(functionName)
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: level === 'advanced' && isProtectedDemo ? { connectionIntent: 'additional_advanced' } : undefined,
+      })
 
       if (error || !data?.authorizationUrl) {
         throw error ?? new Error('No se ha recibido la URL de autorización de Instagram.')
@@ -188,6 +190,7 @@ function Header({ title }: HeaderProps) {
                   >
                     <span className="account-list__platform" aria-hidden="true">◎</span>
                     <span className="account-list__handle">@{account.handle}
+                      {account.isPrimary && <small>Cuenta principal</small>}
                       {account.connectionStatus === 'pending' && <small>Pendiente de autorización</small>}
                       {account.connectionStatus === 'expired' && <small>Reautorización necesaria</small>}
                       {account.connectionStatus === 'error' && <small>Autorización pendiente</small>}
@@ -210,19 +213,30 @@ function Header({ title }: HeaderProps) {
 
         <div className="header-popover">
           <button type="button" className="account-add-button" aria-expanded={openPanel === 'add-account'} onClick={() => togglePanel('add-account')}>
-            <span aria-hidden="true">+</span> {isProtectedDemo ? 'Vincular Retorika_Academy' : 'Añadir nueva cuenta'}
+            <span aria-hidden="true">+</span> {isProtectedDemo ? 'Gestionar cuentas' : 'Añadir nueva cuenta'}
           </button>
           {openPanel === 'add-account' && (
             <section className="header-panel add-account-panel" aria-label="Añadir cuenta de Instagram">
               <div className="header-panel__title"><h2>Añadir cuenta</h2><button type="button" aria-label="Cerrar añadir cuenta" onClick={closePanel}>×</button></div>
               {isProtectedDemo ? (<div className="demo-link-panel">
-                <p className="add-account-panel__description">La cuenta demo está reservada exclusivamente para <strong>@Retorika_Academy</strong>.</p>
-                <p>Genera un enlace de un solo uso para que su propietaria complete el inicio de sesión oficial de Meta. RADAR nunca solicita ni recibe contraseñas de Instagram.</p>
-                <button type="button" className="instagram-connect-button" onClick={() => void generateDemoAuthorizationLink()} disabled={isGeneratingDemoLink}>
-                  {isGeneratingDemoLink ? 'Generando enlace…' : 'Generar enlace para la propietaria'}
-                </button>
-                {demoAuthorizationLink && <div className="demo-link-panel__url"><input aria-label="Enlace de autorización para la propietaria" value={demoAuthorizationLink} readOnly /><button type="button" onClick={() => void copyDemoAuthorizationLink()}>Copiar enlace</button></div>}
-                <p className="add-account-panel__note">No se puede añadir, eliminar ni sustituir otra cuenta de Instagram desde esta cuenta demo.</p>
+                <article className="connection-level connection-level--primary">
+                  <div className="connection-level__heading"><strong>@Retorika_Academy</strong><span>CUENTA PRINCIPAL</span></div>
+                  <p>Es la cuenta principal de RADAR. Permanece protegida y no puede sustituirse ni eliminarse desde la aplicación.</p>
+                  <small>Si aún falta su autorización, genera un enlace seguro para que su propietaria la complete mediante Meta.</small>
+                  <button type="button" className="instagram-connect-button instagram-connect-button--secondary" onClick={() => void generateDemoAuthorizationLink()} disabled={isGeneratingDemoLink}>
+                    {isGeneratingDemoLink ? 'Generando enlace…' : 'Autorizar Retorika_Academy'}
+                  </button>
+                  {demoAuthorizationLink && <div className="demo-link-panel__url"><input aria-label="Enlace de autorización para la propietaria" value={demoAuthorizationLink} readOnly /><button type="button" onClick={() => void copyDemoAuthorizationLink()}>Copiar enlace</button></div>}
+                </article>
+                <article className="connection-level connection-level--advanced">
+                  <div className="connection-level__heading"><strong>Añadir cuenta avanzada</strong><span>ANÁLISIS IA</span></div>
+                  <p>Conecta otra cuenta profesional de Instagram mediante Meta/Facebook para ver métricas, alcance y análisis estratégico con IA.</p>
+                  <small>La cuenta principal seguirá siendo @Retorika_Academy. Selecciona una cuenta distinta al completar la autorización.</small>
+                  <button type="button" className="instagram-connect-button" onClick={() => void requestAccountLink('advanced')} disabled={connectingLevel !== null}>
+                    {connectingLevel === 'advanced' ? 'Abriendo Meta…' : 'Conectar cuenta avanzada'}
+                  </button>
+                </article>
+                <p className="add-account-panel__note">Las cuentas adicionales solo usan la conexión avanzada de Meta. RADAR nunca recibe ni guarda contraseñas de Instagram.</p>
               </div>) : (<>
               <p className="add-account-panel__description">Elige el nivel que mejor encaja con tu cuenta profesional de Instagram.</p>
               <div className="connection-levels">

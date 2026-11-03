@@ -56,14 +56,24 @@ Deno.serve(async (request) => {
     return json({ error: 'La sesión de RADAR ya no es válida.' }, 401, allowedOrigin)
   }
 
-  if (userData.user.email?.toLowerCase() === (Deno.env.get('DEMO_ACCOUNT_EMAIL') ?? 'demo@demo.com').toLowerCase()) {
-    return json({ error: 'La cuenta demo usa un enlace de autorización exclusivo para la propietaria de Retorika_Academy.' }, 403, allowedOrigin)
+  const isDemoAccount = userData.user.email?.toLowerCase() === (Deno.env.get('DEMO_ACCOUNT_EMAIL') ?? 'demo@demo.com').toLowerCase()
+  let connectionIntent = 'standard'
+  try {
+    const body = await request.json() as { connectionIntent?: string }
+    if (body.connectionIntent === 'additional_advanced') connectionIntent = 'additional_advanced'
+  } catch {
+    // El flujo normal no necesita cuerpo.
+  }
+
+  if (isDemoAccount && connectionIntent !== 'additional_advanced') {
+    return json({ error: 'Para Retorika_Academy usa el enlace exclusivo de su propietaria. Las cuentas extra deben iniciarse como conexión avanzada.' }, 403, allowedOrigin)
   }
 
   const state = `${crypto.randomUUID()}${crypto.randomUUID().replaceAll('-', '')}`
   const { error: stateError } = await admin.from('instagram_oauth_states').insert({
     user_id: userData.user.id,
     state_hash: await sha256(state),
+    connection_intent: connectionIntent,
     expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   })
 

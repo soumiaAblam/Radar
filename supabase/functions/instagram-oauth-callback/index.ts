@@ -59,7 +59,7 @@ Deno.serve(async (request) => {
   const admin = createClient(supabaseUrl, serviceRoleKey)
   const { data: oauthState, error: stateError } = await admin
     .from('instagram_oauth_states')
-    .select('id, user_id')
+    .select('id, user_id, connection_intent')
     .eq('state_hash', await sha256(state))
     .is('used_at', null)
     .gt('expires_at', new Date().toISOString())
@@ -130,9 +130,30 @@ Deno.serve(async (request) => {
     const linkedInstagramCount = pages.data
       ?.filter((page) => Boolean(page.instagram_business_account?.id))
       .length ?? 0
-    const instagramAccount = pages.data
+    const instagramCandidates = pages.data
       ?.map((page) => page.instagram_business_account)
-      .find((account): account is NonNullable<MetaPage['instagram_business_account']> => Boolean(account?.id))
+      .filter((account): account is NonNullable<MetaPage['instagram_business_account']> => Boolean(account?.id && account.username)) ?? []
+
+    let instagramAccount = instagramCandidates[0]
+    if (oauthState.connection_intent === 'additional_advanced') {
+      // No reutilizamos la cuenta principal al solicitar una cuenta adicional.
+      // Si la misma persona administra varias páginas, elegimos la primera
+      // cuenta profesional distinta que aún no pertenezca a otro usuario.
+      instagramAccount = undefined
+      for (const candidate of instagramCandidates) {
+        if (candidate.username?.toLowerCase() === 'retorika_academy') continue
+        const { data: linkedAccount, error: linkedAccountError } = await admin
+          .from('instagram_accounts')
+          .select('user_id')
+          .eq('instagram_user_id', candidate.id)
+          .maybeSingle()
+        if (linkedAccountError) throw linkedAccountError
+        if (!linkedAccount || linkedAccount.user_id === oauthState.user_id) {
+          instagramAccount = candidate
+          break
+        }
+      }
+    }
 
     if (!instagramAccount?.username) {
       console.error(`Instagram OAuth: pages_show_list=${pagesShowListStatus}; Meta ha devuelto ${pageCount} página(s); ${linkedInstagramCount} contiene(n) una cuenta profesional de Instagram.`)
@@ -164,6 +185,7 @@ Deno.serve(async (request) => {
         user_id: oauthState.user_id,
         instagram_user_id: instagramAccount.id,
         username: instagramAccount.username,
+        auth_provider: 'facebook',
         connection_status: 'connected',
       }).select('id').single()
       if (error) throw error
