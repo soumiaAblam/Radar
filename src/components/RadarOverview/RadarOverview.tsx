@@ -15,7 +15,7 @@ function RadarOverview({ account, records }: RadarOverviewProps) {
         <p>Convertimos las señales de @{account.handle} en decisiones concretas para la próxima semana.</p>
       </div>
       <aside className="radar-overview__status">
-        <span>{hasEnoughData ? 'ANÁLISIS ACTIVO' : 'RECOPILANDO DATOS'}</span>
+        <span><i aria-hidden="true" />{hasEnoughData ? 'ANÁLISIS ACTIVO' : 'RECOPILANDO DATOS'}</span>
         <strong>{records.length} publicación{records.length === 1 ? '' : 'es'} analizada{records.length === 1 ? '' : 's'}</strong>
         <small>{hasEnoughData ? 'Las oportunidades se actualizan con los datos de esta cuenta.' : 'Añade o sincroniza al menos 3 publicaciones para confirmar patrones.'}</small>
       </aside>

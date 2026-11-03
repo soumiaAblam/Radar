@@ -6,6 +6,7 @@ import PublicationInsights from '../../components/PublicationInsights/Publicatio
 import PublicationLibrary from '../../components/PublicationLibrary/PublicationLibrary'
 import PublicationMetricGrid from '../../components/PublicationMetricGrid/PublicationMetricGrid'
 import PublicationRankings from '../../components/PublicationRankings/PublicationRankings'
+import ContentStudio from '../../components/ContentStudio/ContentStudio'
 import Sidebar from '../../components/Sidebar/Sidebar'
 import { createPublicationRecord, filterAndSortPublications } from '../../lib/publicationAnalytics'
 import { loadPublicationRecords, savePublicationRecords } from '../../lib/publicationStorage'
@@ -92,6 +93,7 @@ function PublicationPage() {
             <h1 id="publication-title">Analiza qué funciona y qué publicar ahora.</h1>
             <p>Consulta el rendimiento de tu contenido, compara formatos y prepara decisiones basadas en datos.</p>
           </section>
+          <ContentStudio accountId={selectedAccount.id} username={selectedAccount.handle} />
           <PublicationDataCollection records={records} onSave={saveRecord} />
           <PublicationMetricGrid records={filteredRecords} />
           <PublicationFilters filters={filters} records={records} onChange={setFilters} />
