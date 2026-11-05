@@ -27,8 +27,12 @@ async function markBindingError(admin: ReturnType<typeof createClient>, internal
   await admin.from('demo_instagram_bindings').update({
     connection_status: 'error',
     updated_at: new Date().toISOString(),
-  }).eq('internal_user_id', internalUserId)
-  await admin.from('instagram_accounts').update({ connection_status: 'error', updated_at: new Date().toISOString() }).eq('user_id', internalUserId)
+  }).eq('internal_user_id', internalUserId).neq('connection_status', 'connected')
+  await admin.from('instagram_accounts')
+    .update({ connection_status: 'error', updated_at: new Date().toISOString() })
+    .eq('user_id', internalUserId)
+    .ilike('username', 'retorika\\_academy')
+    .neq('connection_status', 'connected')
 }
 
 Deno.serve(async (request) => {
@@ -112,7 +116,7 @@ Deno.serve(async (request) => {
     if (updateBindingError) throw updateBindingError
 
     const { data: reservedAccount, error: reservedError } = await admin.from('instagram_accounts')
-      .select('id, instagram_user_id').eq('user_id', ownerId).maybeSingle()
+      .select('id, instagram_user_id').eq('user_id', ownerId).ilike('username', 'retorika\\_academy').maybeSingle()
     if (reservedError || !reservedAccount || (reservedAccount.instagram_user_id && reservedAccount.instagram_user_id !== account.id)) throw new Error('La reserva de Retorika_Academy no es válida.')
 
     const { error: accountError } = await admin.from('instagram_accounts').update({

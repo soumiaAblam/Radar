@@ -32,8 +32,7 @@ function Header({ title }: HeaderProps) {
   const [connectionMessage, setConnectionMessage] = useState('')
   const [connectingLevel, setConnectingLevel] = useState<'basic' | 'advanced' | null>(null)
   const [isProtectedDemo, setIsProtectedDemo] = useState(false)
-  const [demoAuthorizationLink, setDemoAuthorizationLink] = useState('')
-  const [isGeneratingDemoLink, setIsGeneratingDemoLink] = useState(false)
+  const [isAuthorizingPrimary, setIsAuthorizingPrimary] = useState(false)
   const [isSynchronizing, setIsSynchronizing] = useState(false)
   const [profile, setProfile] = useState<ProfileDetails>({ name: 'Usuario demo', email: 'demo@demo.com' })
   const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
@@ -115,29 +114,18 @@ function Header({ title }: HeaderProps) {
     }
   }
 
-  const generateDemoAuthorizationLink = async () => {
+  const authorizePrimaryAccount = async () => {
     setConnectionMessage('')
-    setDemoAuthorizationLink('')
-    setIsGeneratingDemoLink(true)
+    setIsAuthorizingPrimary(true)
     try {
       await ensureDemoSession()
       const { data, error } = await supabase.functions.invoke('demo-instagram-link-create')
       if (error || !data?.authorizationUrl) throw error ?? new Error('No se ha recibido el enlace de autorización.')
-      setDemoAuthorizationLink(data.authorizationUrl as string)
-      setConnectionMessage('Enlace creado. Envíalo únicamente a la propietaria autenticada de @Retorika_Academy; caduca en 24 horas.')
+      window.location.assign(data.authorizationUrl as string)
     } catch (error) {
-      setConnectionMessage(await readableFunctionError(error, 'No se ha podido generar el enlace seguro. Comprueba que la migración y la función estén desplegadas.'))
+      setConnectionMessage(await readableFunctionError(error, 'No se ha podido iniciar la autorización de @Retorika_Academy. Inténtalo de nuevo.'))
     } finally {
-      setIsGeneratingDemoLink(false)
-    }
-  }
-
-  const copyDemoAuthorizationLink = async () => {
-    try {
-      await navigator.clipboard.writeText(demoAuthorizationLink)
-      setConnectionMessage('Enlace copiado. Compártelo con la propietaria de @Retorika_Academy.')
-    } catch {
-      setConnectionMessage('Copia manualmente el enlace mostrado y envíalo a la propietaria de @Retorika_Academy.')
+      setIsAuthorizingPrimary(false)
     }
   }
 
@@ -222,11 +210,10 @@ function Header({ title }: HeaderProps) {
                 <article className="connection-level connection-level--primary">
                   <div className="connection-level__heading"><strong>@Retorika_Academy</strong><span>CUENTA PRINCIPAL</span></div>
                   <p>Es la cuenta principal de RADAR. Permanece protegida y no puede sustituirse ni eliminarse desde la aplicación.</p>
-                  <small>Si aún falta su autorización, genera un enlace seguro para que su propietaria la complete mediante Meta.</small>
-                  <button type="button" className="instagram-connect-button instagram-connect-button--secondary" onClick={() => void generateDemoAuthorizationLink()} disabled={isGeneratingDemoLink}>
-                    {isGeneratingDemoLink ? 'Generando enlace…' : 'Autorizar Retorika_Academy'}
+                  <small>La persona autorizada inicia sesión en Meta y confirma los permisos de la cuenta.</small>
+                  <button type="button" className="instagram-connect-button instagram-connect-button--secondary" onClick={() => void authorizePrimaryAccount()} disabled={isAuthorizingPrimary}>
+                    {isAuthorizingPrimary ? 'Abriendo Meta…' : 'Autorizar Retorika_Academy'}
                   </button>
-                  {demoAuthorizationLink && <div className="demo-link-panel__url"><input aria-label="Enlace de autorización para la propietaria" value={demoAuthorizationLink} readOnly /><button type="button" onClick={() => void copyDemoAuthorizationLink()}>Copiar enlace</button></div>}
                 </article>
                 <article className="connection-level connection-level--advanced">
                   <div className="connection-level__heading"><strong>Añadir cuenta avanzada</strong><span>ANÁLISIS IA</span></div>
