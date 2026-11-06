@@ -3,7 +3,7 @@ import './header.css'
 import { ensureDemoSession, supabase } from '../../lib/supabase'
 import { useAccount } from '../../context/AccountContext'
 
-interface HeaderProps { title: string }
+interface HeaderProps { title: string; showPeriod?: boolean }
 
 type OpenPanel = 'accounts' | 'add-account' | 'notifications' | 'profile' | 'edit-profile' | null
 
@@ -26,7 +26,7 @@ async function readableFunctionError(error: unknown, fallback: string) {
   return fallback
 }
 
-function Header({ title }: HeaderProps) {
+function Header({ title, showPeriod = true }: HeaderProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const { accounts, selectedAccount, selectAccount, refreshAccounts } = useAccount()
   const [connectionMessage, setConnectionMessage] = useState('')
@@ -143,8 +143,10 @@ function Header({ title }: HeaderProps) {
 
       if (error) throw error
       setConnectionMessage(`Sincronización completada: ${data.imported ?? 0} publicaciones importadas.`)
-    } catch {
-      setConnectionMessage('No se han podido sincronizar las publicaciones. Comprueba la conexión de Meta e inténtalo de nuevo.')
+      window.dispatchEvent(new CustomEvent('radar:sync-complete', { detail: { accountId: selectedAccount.id } }))
+    } catch (error) {
+      setConnectionMessage(await readableFunctionError(error, 'No se han podido sincronizar las publicaciones. Comprueba la conexión de Meta e inténtalo de nuevo.'))
+      await refreshAccounts()
     } finally {
       setIsSynchronizing(false)
     }
@@ -195,6 +197,12 @@ function Header({ title }: HeaderProps) {
                   {isSynchronizing ? 'Sincronizando…' : selectedAccount.level === 'basic' ? 'Sincronizar publicaciones básicas' : 'Sincronizar métricas y publicaciones'}
                 </button>
               )}
+              {selectedAccount?.isPrimary && selectedAccount.connectionStatus === 'expired' && (
+                <button type="button" className="account-sync-button" onClick={() => setOpenPanel('add-account')}>
+                  Volver a autorizar cuenta principal
+                </button>
+              )}
+              {connectionMessage && <p className="add-account-panel__message" role="status">{connectionMessage}</p>}
             </section>
           )}
         </div>
@@ -254,7 +262,7 @@ function Header({ title }: HeaderProps) {
       </div>
 
       <div className="app-header__actions">
-        <button type="button" className="period-button">▣ Últimos 30 días <svg className="header-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>
+        {showPeriod && <button type="button" className="period-button">▣ Últimos 30 días <svg className="header-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>}
         <div className="header-popover">
           <button type="button" className="icon-button" aria-label="Notificaciones" aria-expanded={openPanel === 'notifications'} onClick={() => togglePanel('notifications')}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>

@@ -43,7 +43,7 @@ function DataCollection({ records, onSave }: DataCollectionProps) {
         <span>{records.length} registros</span>
       </header>
       <div className="data-collection__sources">
-        <article><div><b>Instagram</b><span>Sin sincronizar</span></div><p>La conexión automática se activará con la autorización oficial de Meta.</p></article>
+        <article><div><b>Instagram</b><span>Publicaciones</span></div><p>Las publicaciones se sincronizan desde el selector de cuentas. Las métricas diarias de esta sección se registran manualmente.</p></article>
         <article><div><b>Datos manuales</b><span>{records.length ? 'En uso' : 'Disponible'}</span></div><p>Introduce las métricas que no lleguen automáticamente desde Instagram.</p></article>
       </div>
       <button type="button" className="data-collection__toggle" onClick={() => setIsFormOpen((isOpen) => !isOpen)} aria-expanded={isFormOpen}>{isFormOpen ? 'Ocultar registro manual' : '+ Registrar métricas manualmente'}</button>
@@ -56,7 +56,7 @@ function DataCollection({ records, onSave }: DataCollectionProps) {
           <button type="submit">Guardar métricas del día</button>
         </form>
       )}
-      {message && <p className="data-collection__message" role="status">{message} Se sincronizará con Supabase cuando la migración y la autenticación estén activas.</p>}
+      {message && <p className="data-collection__message" role="status">{message} No se sincroniza automáticamente con Supabase.</p>}
     </section>
   )
 }

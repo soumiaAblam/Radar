@@ -39,7 +39,7 @@ function AudienceDataCollection({ records, onSave }: AudienceDataCollectionProps
         <span>{records.length} registros</span>
       </header>
       <div className="audience-data-collection__sources">
-        <article><b>Instagram</b><span>Sin sincronizar</span><p>La información demográfica llegará automáticamente al conectar Meta.</p></article>
+        <article><b>Instagram</b><span>Demografía no sincronizada</span><p>Las publicaciones pueden sincronizarse, pero los datos demográficos de esta sección se introducen manualmente.</p></article>
         <article><b>Registro manual</b><span>{records.length ? 'En uso' : 'Disponible'}</span><p>Introduce los datos que ves en las estadísticas de tu cuenta.</p></article>
       </div>
       <button type="button" className="audience-data-collection__toggle" aria-expanded={isFormOpen} onClick={() => setIsFormOpen((isOpen) => !isOpen)}>
