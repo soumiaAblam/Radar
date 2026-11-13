@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.instagram-content-visual]
 verify_jwt = true
+
+[functions.instagram-daily-proposals]
+verify_jwt = false
