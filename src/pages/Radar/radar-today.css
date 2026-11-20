@@ -1,0 +1,52 @@
+.rw-today-new { display: grid; gap: 1rem; }
+.today-progress { position: relative; min-height: 240px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; overflow: hidden; padding: clamp(1.4rem, 3vw, 2.5rem); border: 1px solid #d8e7fb; border-radius: 22px; background: linear-gradient(115deg, #f4f9ff 8%, #e9f3ff 58%, #eefbf5 100%); }
+.today-progress__copy { position: relative; z-index: 1; }
+.today-eyebrow { color: #1866d8; font-size: .65rem; font-weight: 900; letter-spacing: .13em; }
+.today-eyebrow span { color: #df0074; }
+.today-progress h1 { margin: .65rem 0 .4rem; color: #142a57; font-size: clamp(2.15rem, 4vw, 3.5rem); line-height: 1.05; letter-spacing: -.06em; }
+.today-progress h1 em, .today-trends h2 em { color: #1768ec; font-style: normal; }
+.today-progress__date { color: #607797; font-size: .78rem; text-transform: capitalize; }
+.today-progress__status { display: inline-block; margin-top: 1.25rem !important; padding: .5rem .75rem; border: 1px solid #d7ebdf; border-radius: 99px; background: #ffffffcf; color: #007c53; font-size: .72rem; font-weight: 800; }
+.today-progress__visual { position: relative; flex: 0 0 200px; width: 200px; height: 200px; display: grid; place-items: center; }
+.today-progress__orbit { position: absolute; inset: 0; border: 1px solid #bcd8fb; border-radius: 50%; }
+.today-progress__orbit--two { inset: 17px; border-color: #cfe7df; }
+.today-progress__orbit--one::before { content: ''; position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; border-radius: 50%; background: #e40079; box-shadow: 0 0 0 5px #e4007918; }
+.today-progress__spark { position: absolute; top: 12px; right: 10px; color: #df0074; font-size: 1.4rem; }
+.today-progress__ring { position: relative; width: 120px; height: 120px; padding: 9px; border-radius: 50%; box-shadow: 0 9px 24px #155b4520; }
+.today-progress__ring--empty { background: #dce8e4; }
+.today-progress__ring > div { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: .15rem; border-radius: 50%; background: #fff; }
+.today-progress__ring strong { color: #008658; font-size: 1.75rem; letter-spacing: -.06em; line-height: 1; }
+.today-progress__ring small { color: #64877a; font-size: .49rem; font-weight: 900; letter-spacing: .08em; }
+.today-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rw-today-new .rw-actions { border-radius: 20px; }
+.today-trends { padding: clamp(1.2rem, 2.5vw, 1.8rem); border: 1px solid #e6def4; border-radius: 20px; background: linear-gradient(125deg, #fff 35%, #faf6ff); box-shadow: 0 8px 25px #42216b08; }
+.today-trends__heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.today-eyebrow--pink { color: #c40064; }
+.today-trends h2 { margin-top: .4rem; color: #192e58; font-size: clamp(1.5rem, 2.5vw, 2.1rem); letter-spacing: -.05em; }
+.today-trends h2 em { color: #d9006e; }
+.today-trends__badge { flex: none; padding: .45rem .65rem; border-radius: 99px; background: #f3eef8; color: #675975; font-size: .59rem; font-weight: 900; letter-spacing: .05em; }
+.today-trends__note { margin-top: .5rem !important; color: #647797; font-size: .76rem; line-height: 1.5; }
+.today-trends__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; margin-top: 1.2rem; }
+.today-trend { min-width: 0; display: flex; align-items: center; gap: .8rem; min-height: 98px; padding: 1rem; border: 1px solid #dfeaf9; border-radius: 14px; background: #f4f8ff; }
+.today-trend--pink { border-color: #f4ddec; background: #fff6fb; }
+.today-trend--green { border-color: #d7eee3; background: #f1fbf6; }
+.today-trend__icon { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: #e3efff; color: #1768ec; font-size: 1.15rem; font-weight: 900; }
+.today-trend--pink .today-trend__icon { background: #ffe6f3; color: #d9006e; }
+.today-trend--green .today-trend__icon { background: #ddf4e8; color: #008759; }
+.today-trend h3 { color: #20365f; font-size: .9rem; }
+.today-trend p { margin-top: .3rem; color: #687c98; font-size: .68rem; }
+.today-trend__mark { margin-left: auto; align-self: flex-start; color: #a0afc3; }
+@media (prefers-reduced-motion: no-preference) {
+  .rw-today-new > * { animation: today-enter .45s ease-out backwards; }
+  .rw-today-new > :nth-child(2) { animation-delay: .07s; }
+  .rw-today-new > :nth-child(3) { animation-delay: .14s; }
+  .today-progress__orbit--one { animation: today-orbit 35s linear infinite; }
+  .today-progress__spark { animation: today-spark 4s ease-in-out infinite; }
+  .today-trend { transition: transform .2s ease, box-shadow .2s ease; }
+  @media (hover: hover) { .today-trend:hover { transform: translateY(-3px); box-shadow: 0 8px 20px #244e8510; } }
+}
+@keyframes today-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes today-orbit { to { transform: rotate(360deg); } }
+@keyframes today-spark { 0%, 100% { transform: scale(.9); opacity: .7; } 50% { transform: scale(1.12); opacity: 1; } }
+@media (max-width: 720px) { .today-trends__grid { grid-template-columns: 1fr; }.today-trend { min-height: 75px; }.today-progress__visual { flex-basis: 150px; width: 150px; height: 150px; }.today-progress__ring { width: 100px; height: 100px; padding: 7px; }.today-progress__ring strong { font-size: 1.45rem; } }
+@media (max-width: 440px) { .today-progress { padding: 1.2rem; gap: .3rem; }.today-progress h1 { font-size: 2rem; }.today-progress__visual { flex-basis: 108px; width: 108px; height: 108px; }.today-progress__orbit--two { inset: 10px; }.today-progress__ring { width: 80px; height: 80px; padding: 6px; }.today-progress__ring strong { font-size: 1.2rem; }.today-progress__ring small { font-size: .39rem; }.today-progress__spark { right: 0; top: 0; }.today-trends__heading { flex-wrap: wrap; } }
