@@ -6,6 +6,7 @@ const navigationItems = [
   { icon: 'summary', label: 'Resumen', href: '/Dashboard' },
   { icon: 'audience', label: 'Audiencia', href: '/audiencia' },
   { icon: 'publication', label: 'Publicaciones', href: '/publicaciones' },
+  { icon: 'content', label: 'Gestión de contenidos', href: '/gestion-de-contenidos' },
   { icon: 'radar', label: 'Radar', href: '/radar' },
 ]
 
@@ -15,6 +16,7 @@ function NavigationIcon({ name }: { name: NavigationIconName }) {
   if (name === 'summary') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
   if (name === 'audience') return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.2" /><path d="M3.5 20c.7-3.4 2.65-5.2 5.5-5.2s4.8 1.8 5.5 5.2M15.3 15.2c2.55.1 4.2 1.7 4.7 4.8" /></svg>
   if (name === 'publication') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+  if (name === 'content') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m10 9 5 3-5 3z" /></svg>
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
 }
 
