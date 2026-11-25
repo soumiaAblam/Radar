@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import './header.css'
 import { ensureDemoSession, supabase } from '../../lib/supabase'
 import { useAccount } from '../../context/AccountContext'
@@ -28,6 +28,7 @@ async function readableFunctionError(error: unknown, fallback: string) {
 
 function Header({ title, showPeriod = true }: HeaderProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
   const { accounts, selectedAccount, selectAccount, refreshAccounts } = useAccount()
   const [connectionMessage, setConnectionMessage] = useState('')
   const [connectingLevel, setConnectingLevel] = useState<'basic' | 'advanced' | null>(null)
@@ -38,6 +39,24 @@ function Header({ title, showPeriod = true }: HeaderProps) {
   const [profileDraft, setProfileDraft] = useState<ProfileDetails>(profile)
   const [newPassword, setNewPassword] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
+
+  useEffect(() => {
+    if (openPanel !== 'profile') return
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) setOpenPanel(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenPanel(null)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [openPanel])
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
@@ -277,7 +296,7 @@ function Header({ title, showPeriod = true }: HeaderProps) {
             </section>
           )}
         </div>
-        <div className="header-popover">
+        <div className="header-popover" ref={profileRef}>
           <button type="button" className="profile-avatar" aria-label="Abrir perfil" aria-expanded={openPanel === 'profile'} onClick={() => togglePanel('profile')}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20c.85-3.25 3.05-5 6.5-5s5.65 1.75 6.5 5" /></svg>
           </button>

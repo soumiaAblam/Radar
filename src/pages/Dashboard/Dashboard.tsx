@@ -6,6 +6,7 @@ import Header from '../../components/Header/Header'
 import Sidebar from '../../components/Sidebar/Sidebar'
 import WeeklyDiagnosis from '../../components/WeeklyDiagnosis/WeeklyDiagnosis'
 import WeeklyPlan from '../../components/WeeklyPlan/WeeklyPlan'
+import EditorialAgenda from '../../components/EditorialAgenda/EditorialAgenda'
 import { useAccount } from '../../context/AccountContext'
 import type { DashboardPost } from '../../lib/dashboardAnalytics'
 import { loadDailyMetrics, saveDailyMetrics } from '../../lib/metricsStorage'
@@ -89,7 +90,8 @@ function DashboardPage() {
   }
 
   return <div className="dashboard-layout"><Sidebar /><div className="dashboard-shell"><Header title="Resumen" showPeriod={false} /><main className="dashboard-content summary-page premium-summary">
-    <DashboardPerformance posts={posts} daily={dailyRecords} loading={loading} error={error} handle={selectedAccount.handle} />
+    <DashboardPerformance posts={posts} daily={dailyRecords} loading={loading} error={error} />
+    <EditorialAgenda account={selectedAccount} mode="upcoming" />
     <DashboardGoals key={selectedAccount.id} accountId={selectedAccount.id} />
     <details className="premium-manual"><summary><span>＋</span> Registrar métricas manuales <small>Seguidores, alcance y otros datos</small></summary><DataCollection records={dailyRecords} onSave={saveRecord} /></details>
     <details className="premium-manual"><summary><span>✦</span> Diagnóstico y plan semanal <small>Consulta el análisis anterior</small></summary><div className="premium-legacy"><WeeklyDiagnosis recordCount={dailyRecords.length} analysis={analysis} /><WeeklyPlan records={dailyRecords} /></div></details>

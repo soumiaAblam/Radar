@@ -15,7 +15,7 @@ export default function AudienceReal({ records, onSave, posts, loading, error }:
   const withInteraction = posts.filter((post) => [post.likes, post.comments, post.saves, post.shares].some((value) => typeof value === 'number'))
   const interactions = withInteraction.reduce((total, post) => total + (post.likes || 0) + (post.comments || 0) + (post.saves || 0) + (post.shares || 0), 0)
   return <section className="aud-real" aria-labelledby="aud-real-title">
-    <div className="aud-section-head"><div><p className="aud-kicker aud-kicker--green">02 / LA COMUNIDAD EN CIFRAS</p><h2 id="aud-real-title">Audiencia real</h2><p>Una mirada a tu comunidad y al contenido con el que interactúa.</p></div><span className="aud-chip">Datos disponibles</span></div>
+    <div className="aud-section-head"><div><h2 id="aud-real-title">Audiencia real</h2></div><span className="aud-chip">Datos disponibles</span></div>
     <div className="aud-real-grid">
       <article className="aud-card aud-demographics"><div className="aud-card-heading"><div><span className="aud-icon aud-icon--pink" aria-hidden="true">◎</span><h3>Perfil de seguidores</h3></div><span className="aud-label">REGISTRO MANUAL</span></div>
         {latest ? <><p className="aud-muted">Último registro: {date(latest.date)}</p><div className="aud-demo-values"><div><span>Edad principal</span><strong>{latest.topAgeRange || 'Sin datos'}</strong></div><div><span>Ubicación principal</span><strong>{[latest.topCity, latest.topCountry].filter(Boolean).join(', ') || 'Sin datos'}</strong></div></div>

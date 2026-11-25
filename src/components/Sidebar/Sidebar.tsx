@@ -1,6 +1,6 @@
 import './sidebar.css'
 import { NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const navigationItems = [
   { icon: 'summary', label: 'Resumen', href: '/Dashboard' },
@@ -22,6 +22,25 @@ function NavigationIcon({ name }: { name: NavigationIconName }) {
 
 function Sidebar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isSettingsOpen) return
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) setIsSettingsOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsSettingsOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isSettingsOpen])
 
   return (
     <aside className="sidebar" aria-label="Navegación principal">
@@ -42,7 +61,7 @@ function Sidebar() {
         </ul>
       </nav>
 
-      <div className="sidebar-settings-wrap">
+      <div className="sidebar-settings-wrap" ref={settingsRef}>
         {isSettingsOpen && (
           <section className="settings-menu" aria-label="Menú de ajustes">
             <button type="button" className="settings-menu__close" aria-label="Cerrar ajustes" onClick={() => setIsSettingsOpen(false)}>×</button>

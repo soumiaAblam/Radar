@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
-function harness(allowed = true) {
+function harness(allowed = true, includeImage = false) {
   const saved = new Map([['old', { drive_file_id:'old', status:'selected', title:'Título editado', notes:'Conservar', drive_folder_id:null }]])
   const sources = [{ folder_id:'rootfolder', folder_name:'Eventos' }]
   const sourceKeys = new Map(), calls = []
   let handler
   const db = { from(name) {
     if (name === 'drive_sources') return {
-      select: () => ({ eq: async () => ({ data:sources, error:null }) }),
+      select: () => ({ eq: () => { const query = Promise.resolve({ data:sources, error:null }); query.eq = (_, folderId) => Promise.resolve({ data:sources.filter((source) => source.folder_id === folderId), error:null }); query.order = () => query; return query } }),
       update: () => ({ eq: () => ({ eq: async () => ({ error:null }) }) }),
       upsert: async () => ({ error:null }),
     }
@@ -28,18 +28,24 @@ function harness(allowed = true) {
     accessToken: async () => 'test-token', admin: () => db, configured: () => true, headers: () => ({}), encrypt: async (key) => `encrypted:${key}`, decrypt: async (value) => value.slice('encrypted:'.length),
     json: (_, data, status = 200) => new Response(JSON.stringify(data), { status, headers:{ 'Content-Type':'application/json' } }),
     ownsAccount: async () => allowed, userFor: async () => ({ id:'owner' }),
-    googleGet: async (url, _token, keys) => {
+    googleGet: async (url, keys) => {
       calls.push({ path:url.pathname, keys })
       const query = url.searchParams.get('q') || ''
       if (url.pathname.endsWith('/rootfolder')) return { id:'rootfolder', name:'Eventos', mimeType:'application/vnd.google-apps.folder' }
       if (query.includes("'rootfolder'")) return url.searchParams.has('pageToken') ? { files:[{ id:'new', name:'Vídeo 2', mimeType:'video/mp4', createdTime:'2026-01-01T10:00:00Z' }] } : { files:[{ id:'old', name:'Vídeo 1', mimeType:'video/mp4' },{ id:'subfolder', name:'Taller', mimeType:'application/vnd.google-apps.folder' }], nextPageToken:'next' }
-      if (query.includes("'subfolder'")) return { files:[{ id:'nested', name:'Vídeo 3', mimeType:'video/mp4' }] }
+      if (query.includes("'subfolder'")) return { files:[{ id:'nested', name:'Vídeo 3', mimeType:'video/mp4' }, ...(includeImage ? [{ id:'photo', name:'Imagen.jpg', mimeType:'image/jpeg' }, { id:'doc', name:'Notas.pdf', mimeType:'application/pdf' }] : [])] }
       throw new Error('Consulta inesperada')
     },
   }
   const source = readFileSync('supabase/functions/drive-library/index.ts', 'utf8')
   const compiled = ts.transpileModule(source, { compilerOptions:{ target:ts.ScriptTarget.ES2022, module:ts.ModuleKind.CommonJS } })
-  new Function('require', 'Deno', 'exports', compiled.outputText)((name) => { if (name !== '../_shared/drive.ts') throw new Error('Dependencia inesperada'); return fake }, { serve: (fn) => { handler = fn } }, {})
+  const fakeFetch = async (url, options) => {
+    assert.equal(options.headers['X-Goog-Api-Key'], 'test-api-key')
+    assert.equal(options.headers.Authorization, undefined)
+    const keys = (options.headers['X-Goog-Drive-Resource-Keys'] || '').split(',').filter(Boolean).map((pair) => { const [id, key] = pair.split('/'); return { id, key } })
+    return new Response(JSON.stringify(await fake.googleGet(url, keys)), { status:200 })
+  }
+  new Function('require', 'Deno', 'exports', 'fetch', compiled.outputText)((name) => { if (name !== '../_shared/drive.ts') throw new Error('Dependencia inesperada'); return fake }, { serve: (fn) => { handler = fn }, env:{ get: (name) => name === 'GOOGLE_DRIVE_API_KEY' ? 'test-api-key' : 'configured' } }, {}, fakeFetch)
   return { saved, sourceKeys, calls, request: (body = { action:'sync', accountId:'account' }) => handler(new Request('https://example.com', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(body) })) }
 }
 
@@ -62,6 +68,23 @@ test('rechaza sincronizar cuando la cuenta no pertenece al usuario', async () =>
   const h = harness(false)
   assert.equal((await h.request()).status, 403)
   assert.equal(h.saved.size, 1)
+})
+
+test('importa imágenes y vídeos, omite otros documentos y evita duplicados', async () => {
+  const h = harness(true, true)
+  assert.deepEqual(await (await h.request()).json(), { imported:3, skipped:1 })
+  assert.equal(h.saved.get('photo').media_kind, 'image')
+  assert.equal(h.saved.get('nested').media_kind, 'video')
+  assert.equal(h.saved.has('doc'), false)
+  assert.deepEqual(await (await h.request()).json(), { imported:0, skipped:4 })
+})
+
+test('sincroniza únicamente la carpeta solicitada al vincularla', async () => {
+  const h = harness()
+  const response = await h.request({ action:'sync', accountId:'account', folderId:'rootfolder' })
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).imported, 2)
+  assert.equal((await h.request({ action:'sync', accountId:'account', folderId:'other' })).status, 400)
 })
 
 test('conserva la clave del enlace compartido para consultar y sincronizar la carpeta', async () => {

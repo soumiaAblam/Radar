@@ -6,3 +6,28 @@
 @media (max-width: 650px) { .daily-proposals__header { flex-direction: column; }.daily-proposals__grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .daily-proposal { transition: none; } .daily-proposal:hover { transform: none; } }
 .daily-proposals__tabs { display: flex; gap: .45rem; margin-bottom: 1rem; }.daily-proposals__tabs button { padding: .5rem .8rem; border: 1px solid #d5e1ef; border-radius: 8px; background: white; color: #415a7b; font: inherit; font-size: .72rem; font-weight: 800; cursor: pointer; }.daily-proposals__tabs button[aria-pressed="true"] { border-color: #1768ec; background: #edf5ff; color: #1455b8; }.daily-proposals__tabs button:focus-visible { outline: 3px solid #1768ec; outline-offset: 2px; }
+.daily-proposals__more { display: flex; justify-content: center; margin-top: 1.2rem; }
+.daily-proposals__more button { min-height: 44px; padding: .65rem 1rem; border: 1px solid #c5d9f2; border-radius: 10px; background: #fff; color: #1559b9; font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; }
+.daily-proposals__more button:hover { border-color: #1768ec; background: #edf5ff; }
+.daily-proposals__more button:focus-visible { outline: 3px solid #1768ec; outline-offset: 3px; }
+.daily-proposal__material { color: #244c86; font-size: .76rem; font-weight: 700; line-height: 1.45; }
+.proposal-editor-overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: 1rem; background: rgba(10, 25, 53, .62); }
+.proposal-editor { width: min(100%, 780px); max-height: min(90dvh, 900px); overflow-y: auto; border-radius: 20px; background: #fff; box-shadow: 0 24px 70px #07162e66; }
+.proposal-editor__header { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.3rem 1.5rem; border-bottom: 1px solid #e3ecf8; background: #fff; }
+.proposal-editor__header p { margin: 0 0 .3rem; color: #b00060; font-size: .7rem; font-weight: 800; letter-spacing: .1em; }
+.proposal-editor__header h2 { margin: 0; color: #142753; font-size: 1.5rem; }
+.proposal-editor__close { width: 40px; height: 40px; border: 0; border-radius: 50%; background: #eef4fc; color: #203e69; font-size: 1.5rem; cursor: pointer; }
+.proposal-editor__form { display: grid; gap: 1rem; padding: 1.5rem; }
+.proposal-editor__form > label, .proposal-editor__library > label { display: grid; gap: .4rem; color: #1e385f; font-weight: 750; font-size: .9rem; }
+.proposal-editor__form label span { color: #61738e; font-size: .78rem; font-weight: 500; }
+.proposal-editor__form input, .proposal-editor__form textarea { width: 100%; padding: .75rem; border: 1px solid #cbd9eb; border-radius: 9px; background: #fbfdff; color: #142753; font: inherit; font-weight: 400; }
+.proposal-editor__form textarea { resize: vertical; }
+.proposal-editor__form button { cursor: pointer; font: inherit; }
+.proposal-editor__media { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: 1rem; border: 1px solid #dbe7f6; border-radius: 12px; background: #f7faff; }
+.proposal-editor__media > div:first-child { flex: 1 1 220px; }.proposal-editor__media h3 { margin: 0; color: #142753; }.proposal-editor__media p { margin: .35rem 0 0; color: #536a89; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.proposal-editor__media > button, .proposal-editor__actions button { min-height: 42px; padding: .6rem .85rem; border: 1px solid #c8d9ed; border-radius: 9px; background: #fff; color: #245082; font-weight: 750; }
+.proposal-editor__library { flex: 1 0 100%; padding-top: .5rem; }.proposal-editor__library ul { display: grid; gap: .4rem; max-height: 250px; overflow-y: auto; padding: 0; margin: .75rem 0 0; list-style: none; }.proposal-editor__library li button { display: grid; grid-template-columns: 80px 1fr; gap: .15rem .6rem; width: 100%; padding: .7rem; border: 1px solid #dce8f6; border-radius: 8px; background: #fff; color: #1b3a66; text-align: left; }.proposal-editor__library li button[aria-pressed="true"] { border-color: #1768ec; background: #eaf3ff; }.proposal-editor__library li button span { grid-row: span 2; align-self: center; color: #1768ec; font-size: .75rem; }.proposal-editor__library li button small { color: #627897; overflow-wrap: anywhere; }
+.proposal-editor__note { margin: 0; color: #536a89; font-size: .82rem; line-height: 1.55; }.proposal-editor__error { margin: 0; padding: .7rem; border-radius: 8px; background: #fff0f3; color: #a32040; }
+.proposal-editor__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; }.proposal-editor__actions .proposal-editor__primary { background: #1768ec; border-color: #1768ec; color: #fff; }.proposal-editor__actions button:disabled { opacity: .6; cursor: wait; }
+.proposal-editor :is(button,input,textarea):focus-visible { outline: 3px solid #1768ec; outline-offset: 2px; }
+@media (max-width: 650px) { .proposal-editor-overlay { padding: .5rem; }.proposal-editor { max-height: 96dvh; }.proposal-editor__header, .proposal-editor__form { padding: 1rem; }.proposal-editor__actions button { flex: 1 1 auto; } }

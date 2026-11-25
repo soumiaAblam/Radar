@@ -8,6 +8,7 @@ import PublicationMetricGrid from '../../components/PublicationMetricGrid/Public
 import PublicationRankings from '../../components/PublicationRankings/PublicationRankings'
 import ContentStudio from '../../components/ContentStudio/ContentStudio'
 import DailyProposals from '../../components/DailyProposals/DailyProposals'
+import EditorialAgenda from '../../components/EditorialAgenda/EditorialAgenda'
 import Sidebar from '../../components/Sidebar/Sidebar'
 import { createPublicationRecord, filterAndSortPublications } from '../../lib/publicationAnalytics'
 import { loadPublicationRecords, savePublicationRecords } from '../../lib/publicationStorage'
@@ -90,10 +91,10 @@ function PublicationPage() {
         <Header title="Publicaciones" />
         <main className="dashboard-content publication-page">
           <section className="dashboard-intro" aria-labelledby="publication-title">
-            <p className="section-kicker">PUBLICACIONES</p>
             <h1 id="publication-title">Analiza qué funciona y qué publicar ahora.</h1>
             <p>Consulta el rendimiento de tu contenido, compara formatos y prepara decisiones basadas en datos.</p>
           </section>
+          <EditorialAgenda account={selectedAccount} mode="today" />
           <DailyProposals key={selectedAccount.id} account={selectedAccount} />
           <ContentStudio accountId={selectedAccount.id} username={selectedAccount.handle} />
           <PublicationDataCollection records={records} onSave={saveRecord} />

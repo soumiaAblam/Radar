@@ -14,7 +14,7 @@ export default function AudienceStrategy({ profile, onSave }: Props) {
     catch { setMessage('No se ha podido guardar el perfil en este navegador.') }
   }
   return <section className="aud-card aud-target" aria-labelledby="aud-target-title">
-    <div className="aud-section-head"><div><p className="aud-kicker aud-kicker--pink">01 / EL PERFIL ESTRATÉGICO</p><h2 id="aud-target-title">Audiencia deseada</h2><p>Las personas a las que Retorika quiere llegar. Define tu punto de partida y actualízalo cuando lo necesites.</p></div>
+    <div className="aud-section-head"><div><h2 id="aud-target-title">Audiencia deseada</h2></div>
       {!editing && <button className="aud-button aud-button--outline" type="button" onClick={() => { setDraft(profile); setMessage(''); setEditing(true) }}>{filled.length ? '✎  Editar perfil' : '+  Definir perfil'}</button>}</div>
     {editing ? <form className="aud-profile-form" onSubmit={save}>
       {audienceFields.map(({ key, label, placeholder }) => <label key={key}>{label}<textarea rows={2} maxLength={500} placeholder={placeholder} value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></label>)}

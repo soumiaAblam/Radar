@@ -49,7 +49,7 @@ function AudienceContent() {
   }
   const saveProfile = (next: AudienceProfile) => { saveAudienceProfile(selectedAccount.id, next); setProfile(next) }
   return <main className="dashboard-content audience-page">
-    <section className="aud-hero" aria-labelledby="audience-title"><div><p className="aud-kicker">AUDIENCIA · @{selectedAccount.handle}</p><h1 id="audience-title">Las personas detrás<br /><em>de cada interacción.</em></h1><p>Conoce a quién quieres llegar, escucha a tu comunidad y convierte los datos en decisiones con intención.</p><div className="aud-hero__tags"><span>◎ Perfil estratégico</span><span>↗ Comunidad real</span><span>✦ Análisis con IA</span></div></div><div className="aud-hero__art" aria-hidden="true"><div className="aud-orbit aud-orbit--one" /><div className="aud-orbit aud-orbit--two" /><div className="aud-hero__center">◎<small>PERSONAS<br />PRIMERO</small></div><i>✦</i><b>✳</b></div></section>
+    <section className="aud-hero" aria-labelledby="audience-title"><div><h1 id="audience-title">Las personas detrás<br /><em>de cada interacción.</em></h1><p>Conoce a quién quieres llegar, escucha a tu comunidad y convierte los datos en decisiones con intención.</p></div><div className="aud-hero__art" aria-hidden="true"><div className="aud-orbit aud-orbit--one" /><div className="aud-orbit aud-orbit--two" /><div className="aud-hero__center">◎</div><i>✦</i><b>✳</b></div></section>
     <AudienceStrategy profile={profile} onSave={saveProfile} />
     <AudienceReal records={records} onSave={saveRecord} posts={posts} loading={loading} error={error} />
     <AudienceAI account={selectedAccount} profile={profile} latest={records.at(-1)} posts={posts} />

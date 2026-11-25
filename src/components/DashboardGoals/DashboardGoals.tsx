@@ -45,7 +45,7 @@ export default function DashboardGoals({ accountId }: { accountId: string }) {
   }
 
   return <section className="summary-goals premium-panel" aria-labelledby="monthly-goals-title">
-    <div className="premium-section-head"><div><p className="premium-kicker">TU PRÓXIMO PASO <span>✦</span></p><h2 id="monthly-goals-title">Objetivos del mes<span className="premium-dot">.</span></h2><p>Convierte tus prioridades en pequeños avances.</p></div><button type="button" className="premium-action" onClick={() => { setDraft(blank); setEditingId(null); setOpen(true); setNotice('') }}>＋ Crear objetivo</button></div>
+    <div className="premium-section-head"><div><h2 id="monthly-goals-title">Objetivos del mes<span className="premium-dot">.</span></h2></div><button type="button" className="premium-action" onClick={() => { setDraft(blank); setEditingId(null); setOpen(true); setNotice('') }}>＋ Crear objetivo</button></div>
     <p className="summary-goals__storage">Guardados para esta cuenta en este navegador. El progreso se actualiza manualmente.</p>
     {open && <form className="summary-goal-form" onSubmit={save}>
       <div className="summary-goal-form__heading"><h3>{editingId ? 'Editar objetivo' : 'Nuevo objetivo'}</h3><button type="button" onClick={() => { setOpen(false); setEditingId(null); setNotice('') }} aria-label="Cerrar formulario">×</button></div>

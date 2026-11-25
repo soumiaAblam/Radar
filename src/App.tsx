@@ -6,6 +6,7 @@ import PublicationPage from './pages/Publication/Publication'
 import RadarPage from './pages/Radar/Radar'
 import ContentManagementPage from './pages/ContentManagement/ContentManagement'
 import { AccountProvider } from './context/AccountContext'
+import './app-polish.css'
 
 /* funcion LoginPage en Login.tsx */
 /*type PageName = 'login' | 'dashboard' | 'audience'*/

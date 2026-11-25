@@ -42,7 +42,6 @@ function LoginPage() {
             <span>RETORIKA RADAR</span>
           </a>
           <div className="brand-panel__copy">
-            <p className="eyebrow">ANALÍTICA PARA CRECER CON CRITERIO</p>
             <h1 id="brand-title">Tus redes, con una mirada más clara.</h1>
             <p>Convierte datos de Instagram en decisiones de contenido que impulsan tu comunidad.</p>
           </div>
@@ -65,7 +64,6 @@ function LoginPage() {
         <div className="access-panel__content">
           <div className="mobile-brand" aria-label="Retorika Radar">RETORIKA RADAR</div>
           <header>
-            <p className="eyebrow">RETORIKA RADAR</p>
             <h2 id="access-title">Bienvenida de nuevo</h2>
             <p className="access-panel__intro">Accede a tu espacio de análisis y crecimiento.</p>
             <p className="demo-access">Cuenta demo: <strong>demo@demo.com</strong></p>
